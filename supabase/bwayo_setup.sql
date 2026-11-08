@@ -32,13 +32,16 @@ alter table public.posts enable row level security;
 grant usage on schema public to authenticated;
 grant select on public.profiles to authenticated;
 grant select,insert,delete on public.posts to authenticated;
+create or replace function public.bwayo_is_admin()
+returns boolean language sql stable security definer set search_path = ''
+as $ select exists(select 1 from public.profiles where id = auth.uid() and role = 'admin'); $;
 drop policy if exists "Read own profile or admin" on public.profiles;
 create policy "Read own profile or admin" on public.profiles for select to authenticated
-using (id=auth.uid() or exists(select 1 from public.profiles me where me.id=auth.uid() and me.role='admin'));
+using (id = auth.uid() or public.bwayo_is_admin());
 drop policy if exists "Authenticated users read posts" on public.posts;
 create policy "Authenticated users read posts" on public.posts for select to authenticated using(true);
 drop policy if exists "Users create own posts" on public.posts;
 create policy "Users create own posts" on public.posts for insert to authenticated with check(user_id=auth.uid());
 drop policy if exists "Users delete own posts or admin deletes any" on public.posts;
 create policy "Users delete own posts or admin deletes any" on public.posts for delete to authenticated
-using(user_id=auth.uid() or exists(select 1 from public.profiles me where me.id=auth.uid() and me.role='admin'));
+using(user_id=auth.uid() or public.bwayo_is_admin());
