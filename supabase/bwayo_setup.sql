@@ -100,3 +100,42 @@ drop policy if exists "Bwayo users delete own videos" on storage.objects;
 create policy "Bwayo users delete own videos" on storage.objects
 for delete to authenticated
 using (bucket_id='bwayo-videos' and (storage.foldername(name))[1]=auth.uid()::text);
+
+
+-- Likes and comments for community posts.
+create table if not exists public.likes (
+ id uuid primary key default gen_random_uuid(),
+ post_id uuid not null references public.posts(id) on delete cascade,
+ user_id uuid not null references public.profiles(id) on delete cascade,
+ created_at timestamptz not null default now(),
+ unique(post_id,user_id)
+);
+create index if not exists likes_post_id_idx on public.likes(post_id);
+alter table public.likes enable row level security;
+grant select,insert,delete on public.likes to authenticated;
+drop policy if exists "Authenticated users read likes" on public.likes;
+create policy "Authenticated users read likes" on public.likes
+ for select to authenticated using(true);
+drop policy if exists "Users add own likes" on public.likes;
+create policy "Users add own likes" on public.likes
+ for insert to authenticated with check(user_id=auth.uid());
+drop policy if exists "Users remove own likes" on public.likes;
+create policy "Users remove own likes" on public.likes
+ for delete to authenticated using(user_id=auth.uid());
+
+create table if not exists public.comments (
+ id uuid primary key default gen_random_uuid(),
+ post_id uuid not null references public.posts(id) on delete cascade,
+ user_id uuid not null references public.profiles(id) on delete cascade,
+ content text not null check(char_length(content) between 1 and 1000),
+ created_at timestamptz not null default now()
+);
+create index if not exists comments_post_id_created_at_idx on public.comments(post_id,created_at);
+alter table public.comments enable row level security;
+grant select,insert on public.comments to authenticated;
+drop policy if exists "Authenticated users read comments" on public.comments;
+create policy "Authenticated users read comments" on public.comments
+ for select to authenticated using(true);
+drop policy if exists "Users add own comments" on public.comments;
+create policy "Users add own comments" on public.comments
+ for insert to authenticated with check(user_id=auth.uid());
