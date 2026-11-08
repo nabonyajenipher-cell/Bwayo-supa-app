@@ -125,7 +125,7 @@ class MainActivity : Activity() {
   }
   }
   l.addView(publishButton)
-  l.addView(btn("MY PROFILE"){showProfile()});l.addView(btn("NOTIFICATIONS"){showNotifications()})
+  l.addView(btn("MY PROFILE"){showProfile()});l.addView(btn("NOTIFICATIONS"){showNotifications()});l.addView(btn("INVITE FRIENDS"){inviteFriends()})
   if(isAdmin)l.addView(btn("ADMIN DASHBOARD"){showAdmin()})
   l.addView(btn("Refresh feed"){refreshFeed()});l.addView(btn("Sign out"){signOut()})
   feed=LinearLayout(this).apply{orientation=1};l.addView(ScrollView(this).apply{addView(feed)},LinearLayout.LayoutParams(-1,0,1f));setContentView(l);refreshFeed()
@@ -303,6 +303,14 @@ class MainActivity : Activity() {
    }
   }catch(x:Exception){runOnUiThread{msg("Notifications error: "+(x.message?: "error"))}}
   }
+ }
+
+
+ private fun inviteFriends(){
+  val downloadLink="https://github.com/nabonyajenipher-cell/Bwayo-supa-app/actions"
+  val message="Join me on Bwayo Super App! Download the Android app here: "+downloadLink+"\nOpen the latest successful Android APK build, download the bwayo-super-app-debug-apk artifact, extract the ZIP, and install the APK."
+  val intent=Intent(Intent.ACTION_SEND).apply{type="text/plain";putExtra(Intent.EXTRA_TEXT,message)}
+  startActivity(Intent.createChooser(intent,"Invite friends to Bwayo Super App"))
  }
 
  private fun signOut(){async{try{req("/auth/v1/logout","POST",JSONObject(),token)}catch(_:Exception){};token=null;userId=null;userEmail=null;isAdmin=false;getSharedPreferences("bwayo_session",MODE_PRIVATE).edit().clear().apply();runOnUiThread{showAuth()}}}
