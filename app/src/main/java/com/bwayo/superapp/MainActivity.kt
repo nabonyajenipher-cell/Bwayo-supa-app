@@ -105,12 +105,43 @@ class MainActivity : Activity() {
   setContentView(l)
  }
  private fun showAdmin(){
-  val l=base();l.addView(heading("Admin dashboard"));l.addView(TextView(this).apply{text="Administrator: "+userEmail;setTextColor(Color.DKGRAY)})
-  val list=LinearLayout(this).apply{orientation=1};l.addView(ScrollView(this).apply{addView(list)},LinearLayout.LayoutParams(-1,0,1f));l.addView(btn("Back to feed"){loadHome()});setContentView(l)
-  async{try{val rows=fetchPosts();runOnUiThread{list.removeAllViews();for(i in 0 until rows.length()){val r=rows.getJSONObject(i);val id=r.getString("id");val author=r.optJSONObject("profiles")?.optString("name")?:"Member"
-   list.addView(TextView(this).apply{text=author+": "+r.optString("content");textSize=16f;setTextColor(Color.DKGRAY);setPadding(8,12,8,8)})
-   list.addView(btn("Delete post"){async{try{req("/rest/v1/posts?id=eq."+id,"DELETE",JSONObject(),prefer="return=minimal");runOnUiThread{msg("Post deleted");showAdmin()}}catch(x:Exception){runOnUiThread{msg("Delete failed: "+(x.message?:"error"))}}}})
-  }}}catch(x:Exception){runOnUiThread{msg("Admin error: "+(x.message?:"error"))}}}
+  val l=base();l.addView(heading("Admin dashboard"))
+  l.addView(TextView(this).apply{text="Administrator: "+userEmail;setTextColor(Color.DKGRAY)})
+  val stats=TextView(this).apply{text="Loading totals...";textSize=17f;setTextColor(blue);setPadding(8,12,8,12)}
+  l.addView(stats)
+  val list=LinearLayout(this).apply{orientation=1}
+  l.addView(ScrollView(this).apply{addView(list)},LinearLayout.LayoutParams(-1,0,1f))
+  l.addView(btn("Refresh dashboard"){showAdmin()})
+  l.addView(btn("Back to feed"){loadHome()})
+  setContentView(l)
+  async{try{
+   val users=JSONArray(req("/rest/v1/profiles?select=id,name,role&order=created_at.desc"))
+   val posts=fetchPosts()
+   runOnUiThread{
+    stats.text="Total users: "+users.length()+"    Total posts: "+posts.length()
+    list.addView(heading("USERS"))
+    for(i in 0 until users.length()){
+     val u=users.getJSONObject(i);val uid=u.getString("id");val uname=u.optString("name","Member");val role=u.optString("role","user")
+     val row=LinearLayout(this).apply{orientation=1;setPadding(8,8,8,8);setBackgroundColor(Color.WHITE)}
+     row.addView(TextView(this).apply{text=uname+"  •  "+role.uppercase();textSize=16f;setTextColor(Color.DKGRAY)})
+     if(uid!=userId){
+      row.addView(btn(if(role=="admin")"Remove admin access" else "Make admin"){
+       val newRole=if(role=="admin")"user" else "admin"
+       async{try{req("/rest/v1/rpc/bwayo_set_user_role","POST",JSONObject().put("target_user",uid).put("new_role",newRole));runOnUiThread{msg("User role updated");showAdmin()}}
+       catch(x:Exception){runOnUiThread{msg("Role update failed: "+(x.message?:"error"))}}}
+      })
+     }
+     list.addView(row)
+    }
+    list.addView(heading("POSTS"))
+    for(i in 0 until posts.length()){
+     val p=posts.getJSONObject(i);val pid=p.getString("id");val author=p.optJSONObject("profiles")?.optString("name")?:"Member"
+     list.addView(TextView(this).apply{text=author+": "+p.optString("content");textSize=16f;setTextColor(Color.DKGRAY);setPadding(8,12,8,8)})
+     list.addView(btn("Delete post"){async{try{req("/rest/v1/posts?id=eq."+pid,"DELETE",JSONObject(),prefer="return=minimal");runOnUiThread{msg("Post deleted");showAdmin()}}catch(x:Exception){runOnUiThread{msg("Delete failed: "+(x.message?:"error"))}}}})
+    }
+   }
+  }catch(x:Exception){runOnUiThread{msg("Admin dashboard error: "+(x.message?:"error"))}}
+  }
  }
  private fun signOut(){async{try{req("/auth/v1/logout","POST",JSONObject(),token)}catch(_:Exception){};token=null;userId=null;userEmail=null;isAdmin=false;getSharedPreferences("bwayo_session",MODE_PRIVATE).edit().clear().apply();runOnUiThread{showAuth()}}}
 }
