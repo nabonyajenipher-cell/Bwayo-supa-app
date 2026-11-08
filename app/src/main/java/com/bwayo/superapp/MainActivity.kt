@@ -1,5 +1,6 @@
 package com.bwayo.superapp
 import android.app.Activity
+import android.app.AlertDialog
 import android.os.Bundle
 import android.content.Intent
 import android.net.Uri
@@ -128,7 +129,7 @@ class MainActivity : Activity() {
   if(code !in 200..299)throw Exception("Video upload failed ($code): "+response)
   return baseUrl+"/storage/v1/object/public/bwayo-videos/"+path
  }
- private fun fetchPosts():JSONArray=JSONArray(req("/rest/v1/posts?select=id,content,media_url,created_at,profiles(name)&order=created_at.desc&limit=100"))
+ private fun fetchPosts():JSONArray=JSONArray(req("/rest/v1/posts?select=id,user_id,content,media_url,created_at,profiles(name)&order=created_at.desc&limit=100"))
  private fun refreshFeed(){if(!::feed.isInitialized)return;async{try{val rows=fetchPosts();runOnUiThread{
   feed.removeAllViews();for(i in 0 until rows.length()){val r=rows.getJSONObject(i);val author=r.optJSONObject("profiles")?.optString("name")?.takeIf{it.isNotBlank()}?:"Member"
    feed.addView(TextView(this).apply{text=author+": "+r.optString("content");textSize=17f;setTextColor(Color.DKGRAY);setBackgroundColor(Color.WHITE);setPadding(16,18,16,18)})
@@ -137,9 +138,65 @@ class MainActivity : Activity() {
     val player=VideoView(this);player.setVideoURI(Uri.parse(media));player.setMediaController(MediaController(this).apply{setAnchorView(player)})
     feed.addView(player,LinearLayout.LayoutParams(-1,520))
    }
+   val pid=r.getString("id");val uid=userId?: ""
+   val actions=LinearLayout(this).apply{orientation=0;gravity=Gravity.CENTER_VERTICAL}
+   val likeButton=btn("Like"){toggleLike(pid)}
+   val commentButton=btn("Comments"){showComments(pid)}
+   val shareButton=btn("Share"){sharePost(r.optString("content"),media)}
+   actions.addView(likeButton,LinearLayout.LayoutParams(0,-2,1f))
+   actions.addView(commentButton,LinearLayout.LayoutParams(0,-2,1f))
+   actions.addView(shareButton,LinearLayout.LayoutParams(0,-2,1f))
+   feed.addView(actions)
+   async{try{
+    val likes=JSONArray(req("/rest/v1/likes?select=id&post_id=eq."+pid))
+    val mine=JSONArray(req("/rest/v1/likes?select=id&post_id=eq."+pid+"&user_id=eq."+uid))
+    val comments=JSONArray(req("/rest/v1/comments?select=id&post_id=eq."+pid))
+    runOnUiThread{
+     likeButton.text=(if(mine.length()>0)"Unlike" else "Like")+" ("+likes.length()+")"
+     commentButton.text="Comments ("+comments.length()+")"
+    }
+   }catch(_:Exception){}}
    feed.addView(Space(this).apply{minimumHeight=10})
   }
  }}catch(x:Exception){runOnUiThread{msg("Feed error: "+(x.message?:"error"))}}}}
+ private fun toggleLike(postId:String){
+  val uid=userId?:return
+  async{try{
+   val mine=JSONArray(req("/rest/v1/likes?select=id&post_id=eq."+postId+"&user_id=eq."+uid))
+   if(mine.length()>0)req("/rest/v1/likes?post_id=eq."+postId+"&user_id=eq."+uid,"DELETE",JSONObject(),prefer="return=minimal")
+   else req("/rest/v1/likes","POST",JSONObject().put("post_id",postId).put("user_id",uid),prefer="return=minimal")
+   runOnUiThread{refreshFeed()}
+  }catch(x:Exception){runOnUiThread{msg("Like failed: "+(x.message?:"error"))}}
+  }
+ }
+ private fun showComments(postId:String){
+  async{try{
+   val rows=JSONArray(req("/rest/v1/comments?select=content,created_at,profiles(name)&post_id=eq."+postId+"&order=created_at.asc"))
+   val text=StringBuilder()
+   for(i in 0 until rows.length()){
+    val row=rows.getJSONObject(i);val who=row.optJSONObject("profiles")?.optString("name")?:"Member"
+    text.append(who).append(": ").append(row.optString("content")).append("\\n\\n")
+   }
+   runOnUiThread{
+    val input=EditText(this).apply{hint="Write a comment..."}
+    val panel=LinearLayout(this).apply{orientation=1;setPadding(24,8,24,8)}
+    panel.addView(TextView(this).apply{text=if(text.isEmpty())"No comments yet" else text.toString();textSize=15f;setTextColor(Color.DKGRAY)})
+    panel.addView(input)
+    AlertDialog.Builder(this).setTitle("Comments").setView(panel)
+     .setPositiveButton("Send"){_,_->val content=input.text.toString().trim();if(content.isNotBlank())async{try{
+      req("/rest/v1/comments","POST",JSONObject().put("post_id",postId).put("user_id",userId).put("content",content),prefer="return=minimal")
+      runOnUiThread{msg("Comment added");refreshFeed();showComments(postId)}
+     }catch(x:Exception){runOnUiThread{msg("Comment failed: "+(x.message?:"error"))}}}}
+     .setNegativeButton("Close",null).show()
+   }
+  }catch(x:Exception){runOnUiThread{msg("Could not load comments: "+(x.message?:"error"))}}
+  }
+ }
+ private fun sharePost(content:String,media:String){
+  val shareText=content+(if(media.startsWith("http"))"\\n"+media else "")
+  val intent=Intent(Intent.ACTION_SEND).apply{type="text/plain";putExtra(Intent.EXTRA_TEXT,shareText)}
+  startActivity(Intent.createChooser(intent,"Share Bwayo post"))
+ }
  private fun showProfile(){
   val l=base();l.addView(heading("My profile"))
   l.addView(TextView(this).apply{text="Name: "+displayName;textSize=18f;setTextColor(Color.DKGRAY);setPadding(8,12,8,12)})
