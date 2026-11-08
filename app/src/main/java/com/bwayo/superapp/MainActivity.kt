@@ -7,6 +7,8 @@ import android.net.Uri
 import android.widget.MediaController
 import android.widget.VideoView
 import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.widget.*
 import org.json.JSONArray
@@ -27,9 +29,24 @@ class MainActivity : Activity() {
   val p=getSharedPreferences("bwayo_session",MODE_PRIVATE); token=p.getString("token",null); userId=p.getString("user_id",null); userEmail=p.getString("email",null); displayName=p.getString("name","Member")?:"Member"
   if(token!=null&&userId!=null) loadHome() else showAuth()
  }
- private fun base()=LinearLayout(this).apply{orientation=1;setBackgroundColor(Color.rgb(245,248,255));setPadding(24,20,24,24)}
- private fun heading(s:String)=TextView(this).apply{text=s;textSize=25f;setTextColor(blue);gravity=Gravity.CENTER;setPadding(0,12,0,18)}
- private fun btn(s:String,a:()->Unit)=Button(this).apply{text=s;setOnClickListener{a()}}
+ private fun dp(v:Int)= (v*resources.displayMetrics.density).toInt()
+ private fun rounded(color:Int,radius:Int=18)=GradientDrawable().apply{setColor(color);cornerRadius=dp(radius).toFloat()}
+ private fun base()=LinearLayout(this).apply{
+  orientation=1
+  background=GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(239,244,255),Color.rgb(250,251,255)))
+  setPadding(dp(18),dp(16),dp(18),dp(20))
+ }
+ private fun heading(s:String)=TextView(this).apply{
+  text=s;textSize=27f;setTextColor(Color.rgb(25,45,90));typeface=Typeface.create("sans-serif",Typeface.BOLD)
+  gravity=Gravity.CENTER;setPadding(0,dp(16),0,dp(20))
+ }
+ private fun btn(s:String,a:()->Unit)=Button(this).apply{
+  text=s;textSize=14f;isAllCaps=false;typeface=Typeface.create("sans-serif-medium",Typeface.BOLD)
+  setTextColor(Color.WHITE);background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(32,92,210),Color.rgb(92,67,210))).apply{cornerRadius=dp(16).toFloat()}
+  elevation=dp(3).toFloat();setPadding(dp(14),dp(8),dp(14),dp(8))
+  val lp=LinearLayout.LayoutParams(-1,dp(50));lp.setMargins(0,dp(5),0,dp(5));layoutParams=lp
+  setOnClickListener{a()}
+ }
  private fun msg(s:String){Toast.makeText(this,s,Toast.LENGTH_LONG).show()}
  private fun req(path:String,method:String="GET",body:JSONObject?=null,bearer:String?=token,prefer:String?=null):String{
   val c=URL(baseUrl+path).openConnection() as HttpURLConnection
@@ -132,7 +149,7 @@ class MainActivity : Activity() {
  private fun fetchPosts():JSONArray=JSONArray(req("/rest/v1/posts?select=id,user_id,content,media_url,created_at,profiles(name,avatar_url)&order=created_at.desc&limit=100"))
  private fun refreshFeed(){if(!::feed.isInitialized)return;async{try{val rows=fetchPosts();runOnUiThread{
   feed.removeAllViews();for(i in 0 until rows.length()){val r=rows.getJSONObject(i);val author=r.optJSONObject("profiles")?.optString("name")?.takeIf{it.isNotBlank()}?:"Member"
-   feed.addView(TextView(this).apply{text=author+": "+r.optString("content");textSize=17f;setTextColor(Color.DKGRAY);setBackgroundColor(Color.WHITE);setPadding(16,18,16,18)})
+   feed.addView(TextView(this).apply{text="👤  "+author+"\n\n"+r.optString("content");textSize=16f;setTextColor(Color.rgb(40,48,68));typeface=Typeface.create("sans-serif",Typeface.NORMAL);background=rounded(Color.WHITE,18);elevation=dp(2).toFloat();setPadding(dp(18),dp(18),dp(18),dp(18))})
    val media=r.optString("media_url")
    if(media.startsWith("http")){
     val player=VideoView(this);player.setVideoURI(Uri.parse(media));player.setMediaController(MediaController(this).apply{setAnchorView(player)})
