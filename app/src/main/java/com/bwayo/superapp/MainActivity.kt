@@ -32,7 +32,7 @@ class MainActivity : Activity() {
  private fun msg(s:String){Toast.makeText(this,s,Toast.LENGTH_LONG).show()}
  private fun req(path:String,method:String="GET",body:JSONObject?=null,bearer:String?=token,prefer:String?=null):String{
   val c=URL(baseUrl+path).openConnection() as HttpURLConnection
-  c.requestMethod=method;c.connectTimeout=15000;c.readTimeout=15000
+  c.requestMethod=method;c.connectTimeout=60000;c.readTimeout=60000
   c.setRequestProperty("apikey",anonKey);c.setRequestProperty("Content-Type","application/json")
   if(bearer!=null)c.setRequestProperty("Authorization","Bearer "+bearer)
   if(prefer!=null)c.setRequestProperty("Prefer",prefer)
