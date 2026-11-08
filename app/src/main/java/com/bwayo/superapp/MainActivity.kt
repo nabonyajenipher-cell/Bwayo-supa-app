@@ -84,6 +84,7 @@ class MainActivity : Activity() {
    async{try{req("/rest/v1/posts","POST",JSONObject().put("user_id",userId).put("content",content),prefer="return=minimal");runOnUiThread{input.text.clear();msg("Post published online!");refreshFeed()}}
    catch(x:Exception){runOnUiThread{msg("Could not publish: "+(x.message?:"error"))}}}
   })
+  l.addView(btn("MY PROFILE"){showProfile()})
   if(isAdmin)l.addView(btn("ADMIN DASHBOARD"){showAdmin()})
   l.addView(btn("Refresh feed"){refreshFeed()});l.addView(btn("Sign out"){signOut()})
   feed=LinearLayout(this).apply{orientation=1};l.addView(ScrollView(this).apply{addView(feed)},LinearLayout.LayoutParams(-1,0,1f));setContentView(l);refreshFeed()
@@ -95,6 +96,14 @@ class MainActivity : Activity() {
    feed.addView(Space(this).apply{minimumHeight=10})
   }
  }}catch(x:Exception){runOnUiThread{msg("Feed error: "+(x.message?:"error"))}}}}
+ private fun showProfile(){
+  val l=base();l.addView(heading("My profile"))
+  l.addView(TextView(this).apply{text="Name: "+displayName;textSize=18f;setTextColor(Color.DKGRAY);setPadding(8,12,8,12)})
+  l.addView(TextView(this).apply{text="Email: "+(userEmail?: "Not available");textSize=16f;setTextColor(Color.DKGRAY);setPadding(8,8,8,12)})
+  l.addView(TextView(this).apply{text="Account type: "+if(isAdmin)"Administrator" else "Member";textSize=16f;setTextColor(Color.DKGRAY);setPadding(8,8,8,12)})
+  l.addView(btn("Back to feed"){loadHome()})
+  setContentView(l)
+ }
  private fun showAdmin(){
   val l=base();l.addView(heading("Admin dashboard"));l.addView(TextView(this).apply{text="Administrator: "+userEmail;setTextColor(Color.DKGRAY)})
   val list=LinearLayout(this).apply{orientation=1};l.addView(ScrollView(this).apply{addView(list)},LinearLayout.LayoutParams(-1,0,1f));l.addView(btn("Back to feed"){loadHome()});setContentView(l)
