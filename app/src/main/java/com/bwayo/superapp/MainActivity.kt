@@ -33,18 +33,18 @@ class MainActivity : Activity() {
  private fun rounded(color:Int,radius:Int=18)=GradientDrawable().apply{setColor(color);cornerRadius=dp(radius).toFloat()}
  private fun base()=LinearLayout(this).apply{
   orientation=1
-  background=GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(239,244,255),Color.rgb(250,251,255)))
-  setPadding(dp(18),dp(16),dp(18),dp(20))
+  background=GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(242,247,247),Color.rgb(250,252,252)))
+  setPadding(dp(18),dp(18),dp(18),dp(22))
  }
  private fun heading(s:String)=TextView(this).apply{
-  text=s;textSize=27f;setTextColor(Color.rgb(25,45,90));typeface=Typeface.create("sans-serif",Typeface.BOLD)
-  gravity=Gravity.CENTER;setPadding(0,dp(16),0,dp(20))
+  text=s;textSize=26f;setTextColor(Color.rgb(15,48,58));typeface=Typeface.create("sans-serif",Typeface.BOLD)
+  gravity=Gravity.CENTER;setPadding(dp(8),dp(18),dp(8),dp(20))
  }
  private fun btn(s:String,a:()->Unit)=Button(this).apply{
   text=s;textSize=14f;isAllCaps=false;typeface=Typeface.create("sans-serif-medium",Typeface.BOLD)
-  setTextColor(Color.WHITE);background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(32,92,210),Color.rgb(92,67,210))).apply{cornerRadius=dp(16).toFloat()}
-  elevation=dp(3).toFloat();setPadding(dp(14),dp(8),dp(14),dp(8))
-  val lp=LinearLayout.LayoutParams(-1,dp(50));lp.setMargins(0,dp(5),0,dp(5));layoutParams=lp
+  setTextColor(Color.WHITE);background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(0,137,123),Color.rgb(0,105,125))).apply{cornerRadius=dp(18).toFloat()}
+  elevation=dp(4).toFloat();setPadding(dp(16),dp(9),dp(16),dp(9))
+  val lp=LinearLayout.LayoutParams(-1,dp(52));lp.setMargins(0,dp(7),0,dp(7));layoutParams=lp
   setOnClickListener{a()}
  }
  private fun msg(s:String){Toast.makeText(this,s,Toast.LENGTH_LONG).show()}
