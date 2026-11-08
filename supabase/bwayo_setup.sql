@@ -78,3 +78,25 @@ end;
 $$;
 revoke all on function public.bwayo_set_user_role(uuid,text) from public;
 grant execute on function public.bwayo_set_user_role(uuid,text) to authenticated;
+
+
+-- Video uploads for the Bwayo Super App.
+alter table public.posts add column if not exists media_url text;
+insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
+values ('bwayo-videos','bwayo-videos',true,104857600,array['video/mp4','video/quicktime','video/webm'])
+on conflict (id) do update set public=true,file_size_limit=104857600,allowed_mime_types=array['video/mp4','video/quicktime','video/webm'];
+
+drop policy if exists "Bwayo users upload own videos" on storage.objects;
+create policy "Bwayo users upload own videos" on storage.objects
+for insert to authenticated
+with check (bucket_id='bwayo-videos' and (storage.foldername(name))[1]=auth.uid()::text);
+
+drop policy if exists "Public can view Bwayo videos" on storage.objects;
+create policy "Public can view Bwayo videos" on storage.objects
+for select to public
+using (bucket_id='bwayo-videos');
+
+drop policy if exists "Bwayo users delete own videos" on storage.objects;
+create policy "Bwayo users delete own videos" on storage.objects
+for delete to authenticated
+using (bucket_id='bwayo-videos' and (storage.foldername(name))[1]=auth.uid()::text);
