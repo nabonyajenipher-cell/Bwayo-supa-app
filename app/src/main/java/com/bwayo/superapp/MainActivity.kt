@@ -89,10 +89,12 @@ class MainActivity : Activity() {
   })
   videoStatus=TextView(this).apply{text="No video selected";textSize=14f;setTextColor(Color.DKGRAY);setPadding(8,6,8,10)}
   l.addView(videoStatus)
-  val publishButton=btn("Publish post"){
+  lateinit var publishButton:Button
+  publishButton=btn("Publish post"){
    val content=input.text.toString().trim();val video=pickedVideo
    if(content.isBlank()&&video==null){msg("Write a caption or choose a video first.");return@btn}
-   isEnabled=false;text="Publishing..."
+   publishButton.isEnabled=false
+   publishButton.text="Publishing..."
    msg("Publishing started. Please wait...")
    async{try{
     val videoUrl=video?.let{uploadVideo(it)}
@@ -100,9 +102,9 @@ class MainActivity : Activity() {
     if(videoUrl!=null)post.put("media_url",videoUrl)
     req("/rest/v1/posts","POST",post,prefer="return=minimal")
     pickedVideo=null
-    runOnUiThread{input.text.clear();videoStatus?.text="No video selected";publishButtonRestore(publishButton);msg("Post published successfully!");refreshFeed()}
-   }catch(x:Exception){runOnUiThread{publishButtonRestore(publishButton);msg("Could not publish: "+(x.message?:"Unknown error"))}}
-   }
+    runOnUiThread{input.text.clear();videoStatus?.text="No video selected";publishButton.isEnabled=true;publishButton.text="Publish post";msg("Post published successfully!");refreshFeed()}
+   }catch(x:Exception){runOnUiThread{publishButton.isEnabled=true;publishButton.text="Publish post";msg("Could not publish: "+(x.message?:"Unknown error"))}}
+  }
   }
   l.addView(publishButton)
   l.addView(btn("MY PROFILE"){showProfile()})
@@ -111,7 +113,7 @@ class MainActivity : Activity() {
   feed=LinearLayout(this).apply{orientation=1};l.addView(ScrollView(this).apply{addView(feed)},LinearLayout.LayoutParams(-1,0,1f));setContentView(l);refreshFeed()
  }
  override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){super.onActivityResult(requestCode,resultCode,data);if(requestCode==410&&resultCode==RESULT_OK){pickedVideo=data?.data;if(pickedVideo!=null){videoStatus?.text="Video selected ✓  Add a caption, then tap Publish post.";msg("Video selected. Add a caption and tap Publish post.")}else{videoStatus?.text="No video selected"}}}
- private fun publishButtonRestore(button:Button){button.isEnabled=true;button.text="Publish post"}\n private fun uploadVideo(uri:Uri):String{
+ private fun uploadVideo(uri:Uri):String{
   val bytes=contentResolver.openInputStream(uri)?.use{it.readBytes()}?:throw Exception("Cannot read selected video")
   if(bytes.isEmpty())throw Exception("Selected video is empty")
   if(bytes.size>100*1024*1024)throw Exception("Video is larger than 100 MB. Please choose a smaller video.")
