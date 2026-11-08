@@ -22,7 +22,7 @@ class MainActivity : Activity() {
  private val anonKey="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4amlhZHJyYW9mbW5yZWZmdnh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxNDc4MjcsImV4cCI6MjEwOTcyMzgyN30.wr1UqU5WAq3kp-sV0Hb0xWMgDzNq8ycwluCTe7ajInk"
  private val worker=Executors.newSingleThreadExecutor()
  private var token:String?=null; private var userId:String?=null; private var userEmail:String?=null
- private var displayName="Member"; private var isAdmin=false; private lateinit var feed:LinearLayout; private var pickedVideo:Uri?=null; private var videoStatus:TextView?=null
+ private var displayName="Member"; private var isAdmin=false; private lateinit var feed:LinearLayout; private var pickedVideo:Uri?=null; private var videoStatus:TextView?=null; private var pickedAvatar:Uri?=null; private var avatarUrl:String?=null
  override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState)
   val p=getSharedPreferences("bwayo_session",MODE_PRIVATE); token=p.getString("token",null); userId=p.getString("user_id",null); userEmail=p.getString("email",null); displayName=p.getString("name","Member")?:"Member"
   if(token!=null&&userId!=null) loadHome() else showAuth()
@@ -75,9 +75,9 @@ class MainActivity : Activity() {
  }
  private fun loadHome(){
   val t=token?:run{showAuth();return};val id=userId?:run{showAuth();return}
-  async{try{val a=JSONArray(req("/rest/v1/profiles?select=role,name&id=eq."+id,bearer=t))
+  async{try{val a=JSONArray(req("/rest/v1/profiles?select=role,name,avatar_url&id=eq."+id,bearer=t))
    isAdmin=a.length()>0&&a.getJSONObject(0).optString("role")=="admin"
-   if(a.length()>0)a.getJSONObject(0).optString("name").takeIf{it.isNotBlank()}?.let{displayName=it}
+   if(a.length()>0){a.getJSONObject(0).optString("name").takeIf{it.isNotBlank()}?.let{displayName=it};avatarUrl=a.getJSONObject(0).optString("avatar_url").takeIf{it.isNotBlank()}}
    runOnUiThread{showHome()}
   }catch(x:Exception){runOnUiThread{msg("Account setup needed: "+(x.message?:"unknown error"))}}}
  }
@@ -108,12 +108,12 @@ class MainActivity : Activity() {
   }
   }
   l.addView(publishButton)
-  l.addView(btn("MY PROFILE"){showProfile()})
+  l.addView(btn("MY PROFILE"){showProfile()});l.addView(btn("NOTIFICATIONS"){showNotifications()})
   if(isAdmin)l.addView(btn("ADMIN DASHBOARD"){showAdmin()})
   l.addView(btn("Refresh feed"){refreshFeed()});l.addView(btn("Sign out"){signOut()})
   feed=LinearLayout(this).apply{orientation=1};l.addView(ScrollView(this).apply{addView(feed)},LinearLayout.LayoutParams(-1,0,1f));setContentView(l);refreshFeed()
  }
- override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){super.onActivityResult(requestCode,resultCode,data);if(requestCode==410&&resultCode==RESULT_OK){pickedVideo=data?.data;if(pickedVideo!=null){videoStatus?.text="Video selected ✓  Add a caption, then tap Publish post.";msg("Video selected. Add a caption and tap Publish post.")}else{videoStatus?.text="No video selected"}}}
+ override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){super.onActivityResult(requestCode,resultCode,data);if(requestCode==410&&resultCode==RESULT_OK){pickedVideo=data?.data;if(pickedVideo!=null){videoStatus?.text="Video selected ✓  Add a caption, then tap Publish post.";msg("Video selected. Add a caption and tap Publish post.")}else{videoStatus?.text="No video selected"}};if(requestCode==411&&resultCode==RESULT_OK){pickedAvatar=data?.data;if(pickedAvatar!=null)msg("Profile photo selected. Tap Save photo.")}}
  private fun uploadVideo(uri:Uri):String{
   val bytes=contentResolver.openInputStream(uri)?.use{it.readBytes()}?:throw Exception("Cannot read selected video")
   if(bytes.isEmpty())throw Exception("Selected video is empty")
@@ -129,7 +129,7 @@ class MainActivity : Activity() {
   if(code !in 200..299)throw Exception("Video upload failed ($code): "+response)
   return baseUrl+"/storage/v1/object/public/bwayo-videos/"+path
  }
- private fun fetchPosts():JSONArray=JSONArray(req("/rest/v1/posts?select=id,user_id,content,media_url,created_at,profiles(name)&order=created_at.desc&limit=100"))
+ private fun fetchPosts():JSONArray=JSONArray(req("/rest/v1/posts?select=id,user_id,content,media_url,created_at,profiles(name,avatar_url)&order=created_at.desc&limit=100"))
  private fun refreshFeed(){if(!::feed.isInitialized)return;async{try{val rows=fetchPosts();runOnUiThread{
   feed.removeAllViews();for(i in 0 until rows.length()){val r=rows.getJSONObject(i);val author=r.optJSONObject("profiles")?.optString("name")?.takeIf{it.isNotBlank()}?:"Member"
    feed.addView(TextView(this).apply{text=author+": "+r.optString("content");textSize=17f;setTextColor(Color.DKGRAY);setBackgroundColor(Color.WHITE);setPadding(16,18,16,18)})
@@ -199,11 +199,14 @@ class MainActivity : Activity() {
  }
  private fun showProfile(){
   val l=base();l.addView(heading("My profile"))
+  val photo=ImageView(this).apply{adjustViewBounds=true;layoutParams=LinearLayout.LayoutParams(180,180).apply{gravity=Gravity.CENTER};setBackgroundColor(Color.LTGRAY)}
+  l.addView(photo);avatarUrl?.let{loadAvatar(it,photo)}
+  l.addView(btn("Choose profile photo"){val pick=Intent(Intent.ACTION_GET_CONTENT).apply{type="image/*";addCategory(Intent.CATEGORY_OPENABLE)};startActivityForResult(Intent.createChooser(pick,"Choose profile photo"),411)})
+  l.addView(btn("Save photo"){val uri=pickedAvatar;if(uri==null){msg("Choose a photo first.");return@btn};async{try{val url=uploadAvatar(uri);req("/rest/v1/profiles?id=eq."+userId,"PATCH",JSONObject().put("avatar_url",url),prefer="return=minimal");avatarUrl=url;pickedAvatar=null;runOnUiThread{msg("Profile photo saved");showProfile()}}catch(x:Exception){runOnUiThread{msg("Photo save failed: "+(x.message?: "error"))}}}})
   l.addView(TextView(this).apply{text="Name: "+displayName;textSize=18f;setTextColor(Color.DKGRAY);setPadding(8,12,8,12)})
   l.addView(TextView(this).apply{text="Email: "+(userEmail?: "Not available");textSize=16f;setTextColor(Color.DKGRAY);setPadding(8,8,8,12)})
   l.addView(TextView(this).apply{text="Account type: "+if(isAdmin)"Administrator" else "Member";textSize=16f;setTextColor(Color.DKGRAY);setPadding(8,8,8,12)})
-  l.addView(btn("Back to feed"){loadHome()})
-  setContentView(l)
+  l.addView(btn("Back to feed"){loadHome()});setContentView(l)
  }
  private fun showAdmin(){
   val l=base();l.addView(heading("Admin dashboard"))
@@ -244,5 +247,45 @@ class MainActivity : Activity() {
   }catch(x:Exception){runOnUiThread{msg("Admin dashboard error: "+(x.message?:"error"))}}
   }
  }
- private fun signOut(){async{try{req("/auth/v1/logout","POST",JSONObject(),token)}catch(_:Exception){};token=null;userId=null;userEmail=null;isAdmin=false;getSharedPreferences("bwayo_session",MODE_PRIVATE).edit().clear().apply();runOnUiThread{showAuth()}}}
+
+ private fun uploadAvatar(uri:Uri):String{
+  val bytes=contentResolver.openInputStream(uri)?.use{it.readBytes()}?:throw Exception("Cannot read photo")
+  if(bytes.isEmpty()||bytes.size>8*1024*1024)throw Exception("Photo must be smaller than 8 MB")
+  val mime=contentResolver.getType(uri)?: "image/jpeg"
+  val ext=if(mime=="image/png")"png" else if(mime=="image/webp")"webp" else "jpg"
+  val path=(userId?:throw Exception("Sign in first"))+"/"+java.util.UUID.randomUUID().toString()+"."+ext
+  val c=URL(baseUrl+"/storage/v1/object/bwayo-avatars/"+path).openConnection() as HttpURLConnection
+  c.requestMethod="POST";c.connectTimeout=30000;c.readTimeout=60000;c.doOutput=true
+  c.setRequestProperty("apikey",anonKey);c.setRequestProperty("Authorization","Bearer "+(token?:throw Exception("Sign in first")))
+  c.setRequestProperty("Content-Type",mime);c.setRequestProperty("x-upsert","false")
+  c.outputStream.use{it.write(bytes)}
+  val code=c.responseCode;val response=(if(code in 200..299)c.inputStream else c.errorStream)?.bufferedReader()?.use{it.readText()}.orEmpty();c.disconnect()
+  if(code !in 200..299)throw Exception("Photo upload failed ($code): "+response)
+  return baseUrl+"/storage/v1/object/public/bwayo-avatars/"+path
+ }
+ private fun loadAvatar(url:String,view:ImageView){
+  async{try{val c=URL(url).openConnection() as HttpURLConnection;c.connectTimeout=15000;c.readTimeout=15000
+   val bitmap=android.graphics.BitmapFactory.decodeStream(c.inputStream);c.disconnect()
+   if(bitmap!=null)runOnUiThread{view.setImageBitmap(bitmap);view.scaleType=ImageView.ScaleType.CENTER_CROP}
+  }catch(_:Exception){}}
+ }
+ private fun showNotifications(){
+  val l=base();l.addView(heading("Notifications"))
+  val list=LinearLayout(this).apply{orientation=1}
+  l.addView(ScrollView(this).apply{addView(list)},LinearLayout.LayoutParams(-1,0,1f))
+  l.addView(btn("Back to feed"){loadHome()});setContentView(l)
+  async{try{
+   val rows=JSONArray(req("/rest/v1/notifications?select=id,message,created_at,is_read&order=created_at.desc&limit=100"))
+   runOnUiThread{
+    if(rows.length()==0)list.addView(TextView(this).apply{text="You have no notifications yet.";textSize=16f;setTextColor(Color.DKGRAY)})
+    for(i in 0 until rows.length()){
+     val n=rows.getJSONObject(i);val nid=n.getString("id")
+     list.addView(TextView(this).apply{text=(if(n.optBoolean("is_read"))"○ " else "● ")+n.optString("message");textSize=16f;setTextColor(Color.DKGRAY);setPadding(12,16,12,16);setBackgroundColor(Color.WHITE)})
+     if(!n.optBoolean("is_read"))list.addView(btn("Mark as read"){async{try{req("/rest/v1/notifications?id=eq."+nid,"PATCH",JSONObject().put("is_read",true),prefer="return=minimal");runOnUiThread{showNotifications()}}catch(x:Exception){runOnUiThread{msg("Could not update notification")}}}})
+    }
+   }
+  }catch(x:Exception){runOnUiThread{msg("Notifications error: "+(x.message?: "error"))}}
+  }
+ }
+\n private fun signOut(){async{try{req("/auth/v1/logout","POST",JSONObject(),token)}catch(_:Exception){};token=null;userId=null;userEmail=null;isAdmin=false;getSharedPreferences("bwayo_session",MODE_PRIVATE).edit().clear().apply();runOnUiThread{showAuth()}}}
 }
