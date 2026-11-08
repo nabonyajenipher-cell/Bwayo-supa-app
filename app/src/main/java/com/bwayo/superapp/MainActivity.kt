@@ -21,7 +21,7 @@ class MainActivity : Activity() {
  private val anonKey="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4amlhZHJyYW9mbW5yZWZmdnh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxNDc4MjcsImV4cCI6MjEwOTcyMzgyN30.wr1UqU5WAq3kp-sV0Hb0xWMgDzNq8ycwluCTe7ajInk"
  private val worker=Executors.newSingleThreadExecutor()
  private var token:String?=null; private var userId:String?=null; private var userEmail:String?=null
- private var displayName="Member"; private var isAdmin=false; private lateinit var feed:LinearLayout; private var pickedVideo:Uri?=null
+ private var displayName="Member"; private var isAdmin=false; private lateinit var feed:LinearLayout; private var pickedVideo:Uri?=null; private var videoStatus:TextView?=null
  override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState)
   val p=getSharedPreferences("bwayo_session",MODE_PRIVATE); token=p.getString("token",null); userId=p.getString("user_id",null); userEmail=p.getString("email",null); displayName=p.getString("name","Member")?:"Member"
   if(token!=null&&userId!=null) loadHome() else showAuth()
@@ -87,18 +87,31 @@ class MainActivity : Activity() {
    val pick=Intent(Intent.ACTION_GET_CONTENT).apply{type="video/*";addCategory(Intent.CATEGORY_OPENABLE)}
    startActivityForResult(Intent.createChooser(pick,"Select a video"),410)
   })
-  l.addView(btn("Publish post"){
-   val content=input.text.toString().trim();val video=pickedVideo;if(content.isBlank()&&video==null){msg("Write a post or choose a video first.");return@btn}
-   async{try{val videoUrl=video?.let{uploadVideo(it)};val post=JSONObject().put("user_id",userId).put("content",content.ifBlank{"Video"});if(videoUrl!=null)post.put("media_url",videoUrl);req("/rest/v1/posts","POST",post,prefer="return=minimal");pickedVideo=null;runOnUiThread{input.text.clear();msg("Post published online!");refreshFeed()}}
-   catch(x:Exception){runOnUiThread{msg("Could not publish: "+(x.message?:"error"))}}}
-  })
+  videoStatus=TextView(this).apply{text="No video selected";textSize=14f;setTextColor(Color.DKGRAY);setPadding(8,6,8,10)}
+  l.addView(videoStatus)
+  val publishButton=btn("Publish post"){
+   val content=input.text.toString().trim();val video=pickedVideo
+   if(content.isBlank()&&video==null){msg("Write a caption or choose a video first.");return@btn}
+   isEnabled=false;text="Publishing..."
+   msg("Publishing started. Please wait...")
+   async{try{
+    val videoUrl=video?.let{uploadVideo(it)}
+    val post=JSONObject().put("user_id",userId).put("content",content.ifBlank{"Video"})
+    if(videoUrl!=null)post.put("media_url",videoUrl)
+    req("/rest/v1/posts","POST",post,prefer="return=minimal")
+    pickedVideo=null
+    runOnUiThread{input.text.clear();videoStatus?.text="No video selected";publishButtonRestore(publishButton);msg("Post published successfully!");refreshFeed()}
+   }catch(x:Exception){runOnUiThread{publishButtonRestore(publishButton);msg("Could not publish: "+(x.message?:"Unknown error"))}}
+   }
+  }
+  l.addView(publishButton)
   l.addView(btn("MY PROFILE"){showProfile()})
   if(isAdmin)l.addView(btn("ADMIN DASHBOARD"){showAdmin()})
   l.addView(btn("Refresh feed"){refreshFeed()});l.addView(btn("Sign out"){signOut()})
   feed=LinearLayout(this).apply{orientation=1};l.addView(ScrollView(this).apply{addView(feed)},LinearLayout.LayoutParams(-1,0,1f));setContentView(l);refreshFeed()
  }
- override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){super.onActivityResult(requestCode,resultCode,data);if(requestCode==410&&resultCode==RESULT_OK){pickedVideo=data?.data;if(pickedVideo!=null)msg("Video selected. Add a caption and tap Publish post.")}}
- private fun uploadVideo(uri:Uri):String{
+ override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){super.onActivityResult(requestCode,resultCode,data);if(requestCode==410&&resultCode==RESULT_OK){pickedVideo=data?.data;if(pickedVideo!=null){videoStatus?.text="Video selected ✓  Add a caption, then tap Publish post.";msg("Video selected. Add a caption and tap Publish post.")}else{videoStatus?.text="No video selected"}}}
+ private fun publishButtonRestore(button:Button){button.isEnabled=true;button.text="Publish post"}\n private fun uploadVideo(uri:Uri):String{
   val bytes=contentResolver.openInputStream(uri)?.use{it.readBytes()}?:throw Exception("Cannot read selected video")
   if(bytes.isEmpty())throw Exception("Selected video is empty")
   if(bytes.size>100*1024*1024)throw Exception("Video is larger than 100 MB. Please choose a smaller video.")
