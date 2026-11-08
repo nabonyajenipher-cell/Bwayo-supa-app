@@ -27,6 +27,12 @@ end; $$;
 drop trigger if exists on_auth_user_created_bwayo on auth.users;
 create trigger on_auth_user_created_bwayo after insert on auth.users
 for each row execute procedure public.bwayo_new_user();
+
+-- Also promote the existing account if it was created before this setup script ran.
+update public.profiles p
+set role = 'admin'
+from auth.users u
+where p.id = u.id and lower(u.email) = 'nabonyajenipher@gmail.com';
 alter table public.profiles enable row level security;
 alter table public.posts enable row level security;
 grant usage on schema public to authenticated;
