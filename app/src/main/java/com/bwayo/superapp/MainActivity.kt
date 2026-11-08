@@ -70,13 +70,12 @@ class MainActivity : Activity() {
  }
  private fun loadHome(){
   val t=token?:run{showAuth();return};val id=userId?:run{showAuth();return}
-  async{try{val a=JSONArray(req("/rest/v1/profiles?select=role,name&id=eq."+id,takeBearer(t),t))
+  async{try{val a=JSONArray(req("/rest/v1/profiles?select=role,name&id=eq."+id,bearer=t))
    isAdmin=a.length()>0&&a.getJSONObject(0).optString("role")=="admin"
    if(a.length()>0)a.getJSONObject(0).optString("name").takeIf{it.isNotBlank()}?.let{displayName=it}
    runOnUiThread{showHome()}
   }catch(x:Exception){runOnUiThread{msg("Account setup needed: "+(x.message?:"unknown error"))}}}
  }
- private fun takeBearer(t:String)=t
  private fun showHome(){
   val l=base();l.addView(heading("Hello, "+displayName));l.addView(TextView(this).apply{text="Your community feed";textSize=18f;setTextColor(Color.DKGRAY)})
   val input=EditText(this).apply{hint="Write a post..."};l.addView(input)
