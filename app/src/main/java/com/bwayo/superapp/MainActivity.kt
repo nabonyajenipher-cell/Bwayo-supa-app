@@ -172,15 +172,15 @@ class MainActivity : Activity() {
  private fun showComments(postId:String){
   async{try{
    val rows=JSONArray(req("/rest/v1/comments?select=content,created_at,profiles(name)&post_id=eq."+postId+"&order=created_at.asc"))
-   val text=StringBuilder()
+   val commentsText=StringBuilder()
    for(i in 0 until rows.length()){
     val row=rows.getJSONObject(i);val who=row.optJSONObject("profiles")?.optString("name")?:"Member"
-    text.append(who).append(": ").append(row.optString("content")).append("\\n\\n")
+    commentsText.append(who).append(": ").append(row.optString("content")).append("\n\n")
    }
    runOnUiThread{
     val input=EditText(this).apply{hint="Write a comment..."}
     val panel=LinearLayout(this).apply{orientation=1;setPadding(24,8,24,8)}
-    panel.addView(TextView(this).apply{text=if(text.isEmpty())"No comments yet" else text.toString();textSize=15f;setTextColor(Color.DKGRAY)})
+    panel.addView(TextView(this).apply{text=if(commentsText.isEmpty())"No comments yet" else commentsText.toString();textSize=15f;setTextColor(Color.DKGRAY)})
     panel.addView(input)
     AlertDialog.Builder(this).setTitle("Comments").setView(panel)
      .setPositiveButton("Send"){_,_->val content=input.text.toString().trim();if(content.isNotBlank())async{try{
@@ -193,7 +193,7 @@ class MainActivity : Activity() {
   }
  }
  private fun sharePost(content:String,media:String){
-  val shareText=content+(if(media.startsWith("http"))"\\n"+media else "")
+  val shareText=content+(if(media.startsWith("http"))"\n"+media else "")
   val intent=Intent(Intent.ACTION_SEND).apply{type="text/plain";putExtra(Intent.EXTRA_TEXT,shareText)}
   startActivity(Intent.createChooser(intent,"Share Bwayo post"))
  }
