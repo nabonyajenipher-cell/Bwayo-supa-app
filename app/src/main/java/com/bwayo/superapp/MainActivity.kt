@@ -1,6 +1,10 @@
 package com.bwayo.superapp
 import android.app.Activity
 import android.os.Bundle
+import android.content.Intent
+import android.net.Uri
+import android.widget.MediaController
+import android.widget.VideoView
 import android.graphics.Color
 import android.view.Gravity
 import android.widget.*
@@ -17,7 +21,7 @@ class MainActivity : Activity() {
  private val anonKey="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4amlhZHJyYW9mbW5yZWZmdnh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxNDc4MjcsImV4cCI6MjEwOTcyMzgyN30.wr1UqU5WAq3kp-sV0Hb0xWMgDzNq8ycwluCTe7ajInk"
  private val worker=Executors.newSingleThreadExecutor()
  private var token:String?=null; private var userId:String?=null; private var userEmail:String?=null
- private var displayName="Member"; private var isAdmin=false; private lateinit var feed:LinearLayout
+ private var displayName="Member"; private var isAdmin=false; private lateinit var feed:LinearLayout; private var pickedVideo:Uri?=null
  override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState)
   val p=getSharedPreferences("bwayo_session",MODE_PRIVATE); token=p.getString("token",null); userId=p.getString("user_id",null); userEmail=p.getString("email",null); displayName=p.getString("name","Member")?:"Member"
   if(token!=null&&userId!=null) loadHome() else showAuth()
@@ -79,9 +83,13 @@ class MainActivity : Activity() {
  private fun showHome(){
   val l=base();l.addView(heading("Hello, "+displayName));l.addView(TextView(this).apply{text="Your community feed";textSize=18f;setTextColor(Color.DKGRAY)})
   val input=EditText(this).apply{hint="Write a post..."};l.addView(input)
+  l.addView(btn("Choose video to upload"){
+   val pick=Intent(Intent.ACTION_GET_CONTENT).apply{type="video/*";addCategory(Intent.CATEGORY_OPENABLE)}
+   startActivityForResult(Intent.createChooser(pick,"Select a video"),410)
+  })
   l.addView(btn("Publish post"){
-   val content=input.text.toString().trim();if(content.isBlank()){msg("Write something first.");return@btn}
-   async{try{req("/rest/v1/posts","POST",JSONObject().put("user_id",userId).put("content",content),prefer="return=minimal");runOnUiThread{input.text.clear();msg("Post published online!");refreshFeed()}}
+   val content=input.text.toString().trim();val video=pickedVideo;if(content.isBlank()&&video==null){msg("Write a post or choose a video first.");return@btn}
+   async{try{val videoUrl=video?.let{uploadVideo(it)};val post=JSONObject().put("user_id",userId).put("content",content.ifBlank{"Video"});if(videoUrl!=null)post.put("media_url",videoUrl);req("/rest/v1/posts","POST",post,prefer="return=minimal");pickedVideo=null;runOnUiThread{input.text.clear();msg("Post published online!");refreshFeed()}}
    catch(x:Exception){runOnUiThread{msg("Could not publish: "+(x.message?:"error"))}}}
   })
   l.addView(btn("MY PROFILE"){showProfile()})
@@ -89,10 +97,31 @@ class MainActivity : Activity() {
   l.addView(btn("Refresh feed"){refreshFeed()});l.addView(btn("Sign out"){signOut()})
   feed=LinearLayout(this).apply{orientation=1};l.addView(ScrollView(this).apply{addView(feed)},LinearLayout.LayoutParams(-1,0,1f));setContentView(l);refreshFeed()
  }
- private fun fetchPosts():JSONArray=JSONArray(req("/rest/v1/posts?select=id,content,created_at,profiles(name)&order=created_at.desc&limit=100"))
+ override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){super.onActivityResult(requestCode,resultCode,data);if(requestCode==410&&resultCode==RESULT_OK){pickedVideo=data?.data;if(pickedVideo!=null)msg("Video selected. Add a caption and tap Publish post.")}}
+ private fun uploadVideo(uri:Uri):String{
+  val bytes=contentResolver.openInputStream(uri)?.use{it.readBytes()}?:throw Exception("Cannot read selected video")
+  if(bytes.isEmpty())throw Exception("Selected video is empty")
+  if(bytes.size>100*1024*1024)throw Exception("Video is larger than 100 MB. Please choose a smaller video.")
+  val ext=when(contentResolver.getType(uri)){"video/quicktime"->"mov";"video/webm"->"webm";else->"mp4"}
+  val path=(userId?:throw Exception("Please sign in"))+"/"+java.util.UUID.randomUUID().toString()+"."+ext
+  val c=URL(baseUrl+"/storage/v1/object/bwayo-videos/"+path).openConnection() as HttpURLConnection
+  c.requestMethod="POST";c.connectTimeout=30000;c.readTimeout=60000;c.doOutput=true
+  c.setRequestProperty("apikey",anonKey);c.setRequestProperty("Authorization","Bearer "+(token?:throw Exception("Please sign in")))
+  c.setRequestProperty("Content-Type",contentResolver.getType(uri)?:"video/mp4");c.setRequestProperty("x-upsert","false")
+  c.outputStream.use{it.write(bytes)}
+  val code=c.responseCode;val response=(if(code in 200..299)c.inputStream else c.errorStream)?.bufferedReader()?.use{it.readText()}.orEmpty();c.disconnect()
+  if(code !in 200..299)throw Exception("Video upload failed ($code): "+response)
+  return baseUrl+"/storage/v1/object/public/bwayo-videos/"+path
+ }
+ private fun fetchPosts():JSONArray=JSONArray(req("/rest/v1/posts?select=id,content,media_url,created_at,profiles(name)&order=created_at.desc&limit=100"))
  private fun refreshFeed(){if(!::feed.isInitialized)return;async{try{val rows=fetchPosts();runOnUiThread{
   feed.removeAllViews();for(i in 0 until rows.length()){val r=rows.getJSONObject(i);val author=r.optJSONObject("profiles")?.optString("name")?.takeIf{it.isNotBlank()}?:"Member"
    feed.addView(TextView(this).apply{text=author+": "+r.optString("content");textSize=17f;setTextColor(Color.DKGRAY);setBackgroundColor(Color.WHITE);setPadding(16,18,16,18)})
+   val media=r.optString("media_url")
+   if(media.startsWith("http")){
+    val player=VideoView(this);player.setVideoURI(Uri.parse(media));player.setMediaController(MediaController(this).apply{setAnchorView(player)})
+    feed.addView(player,LinearLayout.LayoutParams(-1,520))
+   }
    feed.addView(Space(this).apply{minimumHeight=10})
   }
  }}catch(x:Exception){runOnUiThread{msg("Feed error: "+(x.message?:"error"))}}}}
