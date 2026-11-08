@@ -51,3 +51,30 @@ create policy "Users create own posts" on public.posts for insert to authenticat
 drop policy if exists "Users delete own posts or admin deletes any" on public.posts;
 create policy "Users delete own posts or admin deletes any" on public.posts for delete to authenticated
 using(user_id=auth.uid() or public.bwayo_is_admin());
+
+
+-- Secure admin-only role management for the app dashboard.
+create or replace function public.bwayo_set_user_role(target_user uuid, new_role text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+ if not public.bwayo_is_admin() then
+  raise exception 'Administrator access required';
+ end if;
+ if new_role not in ('user','admin') then
+  raise exception 'Invalid role';
+ end if;
+ if target_user = auth.uid() then
+  raise exception 'You cannot change your own administrator role';
+ end if;
+ update public.profiles set role = new_role where id = target_user;
+ if not found then
+  raise exception 'User profile not found';
+ end if;
+end;
+$$;
+revoke all on function public.bwayo_set_user_role(uuid,text) from public;
+grant execute on function public.bwayo_set_user_role(uuid,text) to authenticated;
