@@ -139,3 +139,72 @@ create policy "Authenticated users read comments" on public.comments
 drop policy if exists "Users add own comments" on public.comments;
 create policy "Users add own comments" on public.comments
  for insert to authenticated with check(user_id=auth.uid());
+
+
+-- Profile photos and in-app activity notifications.
+alter table public.profiles add column if not exists avatar_url text;
+grant update(avatar_url) on public.profiles to authenticated;
+drop policy if exists "Users update own profile photo" on public.profiles;
+create policy "Users update own profile photo" on public.profiles
+ for update to authenticated using(id=auth.uid()) with check(id=auth.uid());
+
+insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
+values ('bwayo-avatars','bwayo-avatars',true,8388608,array['image/jpeg','image/png','image/webp'])
+on conflict(id) do update set public=true,file_size_limit=8388608,allowed_mime_types=array['image/jpeg','image/png','image/webp'];
+
+drop policy if exists "Bwayo users upload own avatars" on storage.objects;
+create policy "Bwayo users upload own avatars" on storage.objects
+ for insert to authenticated
+ with check(bucket_id='bwayo-avatars' and (storage.foldername(name))[1]=auth.uid()::text);
+drop policy if exists "Public can view Bwayo avatars" on storage.objects;
+create policy "Public can view Bwayo avatars" on storage.objects
+ for select to public using(bucket_id='bwayo-avatars');
+drop policy if exists "Bwayo users delete own avatars" on storage.objects;
+create policy "Bwayo users delete own avatars" on storage.objects
+ for delete to authenticated
+ using(bucket_id='bwayo-avatars' and (storage.foldername(name))[1]=auth.uid()::text);
+
+create table if not exists public.notifications (
+ id uuid primary key default gen_random_uuid(),
+ user_id uuid not null references public.profiles(id) on delete cascade,
+ message text not null check(char_length(message) between 1 and 500),
+ is_read boolean not null default false,
+ created_at timestamptz not null default now()
+);
+create index if not exists notifications_user_created_idx on public.notifications(user_id,created_at desc);
+alter table public.notifications enable row level security;
+grant select,update on public.notifications to authenticated;
+drop policy if exists "Users read own notifications" on public.notifications;
+create policy "Users read own notifications" on public.notifications
+ for select to authenticated using(user_id=auth.uid());
+drop policy if exists "Users mark own notifications read" on public.notifications;
+create policy "Users mark own notifications read" on public.notifications
+ for update to authenticated using(user_id=auth.uid()) with check(user_id=auth.uid());
+
+create or replace function public.bwayo_notify_post_owner()
+returns trigger language plpgsql security definer set search_path=''
+as $$
+declare
+ owner_id uuid;
+ actor_name text;
+ action_text text;
+begin
+ select user_id into owner_id from public.posts where id=new.post_id;
+ if owner_id is not null and owner_id <> new.user_id then
+  select coalesce(nullif(name,''),'Someone') into actor_name from public.profiles where id=new.user_id;
+  if tg_table_name='likes' then action_text='liked your post';
+  else action_text='commented on your post: '||left(new.content,120);
+  end if;
+  insert into public.notifications(user_id,message)
+  values(owner_id,coalesce(actor_name,'Someone')||' '||action_text);
+ end if;
+ return new;
+end;
+$$;
+
+drop trigger if exists bwayo_notify_like on public.likes;
+create trigger bwayo_notify_like after insert on public.likes
+for each row execute function public.bwayo_notify_post_owner();
+drop trigger if exists bwayo_notify_comment on public.comments;
+create trigger bwayo_notify_comment after insert on public.comments
+for each row execute function public.bwayo_notify_post_owner();
