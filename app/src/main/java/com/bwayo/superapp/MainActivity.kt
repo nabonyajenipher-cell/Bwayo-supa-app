@@ -51,7 +51,7 @@ class MainActivity : Activity() {
  }
  private fun msg(s:String){Toast.makeText(this,s,Toast.LENGTH_LONG).show()}
  private fun setScrollableContent(content:LinearLayout){
-  val scroll=ScrollView(this).apply{isFillViewport=true;addView(content,ScrollView.LayoutParams(-1,-2))}
+  val scroll=ScrollView(this).apply{isFillViewport=true;addView(content)}
   setContentView(scroll)
  }
  private fun req(path:String,method:String="GET",body:JSONObject?=null,bearer:String?=token,prefer:String?=null):String{
