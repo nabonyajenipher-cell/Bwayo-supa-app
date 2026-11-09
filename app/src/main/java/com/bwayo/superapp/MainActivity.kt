@@ -4,6 +4,8 @@ import android.app.AlertDialog
 import android.os.Bundle
 import android.content.Intent
 import android.net.Uri
+import android.app.DownloadManager
+import android.os.Environment
 import android.widget.MediaController
 import android.widget.VideoView
 import android.graphics.Color
@@ -164,6 +166,9 @@ class MainActivity : Activity() {
    actions.addView(commentButton,LinearLayout.LayoutParams(0,-2,1f))
    actions.addView(shareButton,LinearLayout.LayoutParams(0,-2,1f))
    feed.addView(actions)
+   if(media.startsWith("http")){
+    feed.addView(btn("Download video"){downloadPost(media,pid)})
+   }
    async{try{
     val likes=JSONArray(req("/rest/v1/likes?select=id&post_id=eq."+pid))
     val mine=JSONArray(req("/rest/v1/likes?select=id&post_id=eq."+pid+"&user_id=eq."+uid))
@@ -208,6 +213,24 @@ class MainActivity : Activity() {
    }
   }catch(x:Exception){runOnUiThread{msg("Could not load comments: "+(x.message?:"error"))}}
   }
+ }
+ private fun downloadPost(media:String,postId:String){
+  try{
+   val uri=Uri.parse(media)
+   if(uri.scheme!="https"&&uri.scheme!="http"){msg("This video link cannot be downloaded.");return}
+   val extension=uri.lastPathSegment?.substringAfterLast('.', "mp4")?.takeIf{it.matches(Regex("[A-Za-z0-9]{2,5}"))}?: "mp4"
+   val request=DownloadManager.Request(uri)
+    .setTitle("Bwayo video")
+    .setDescription("Downloading video from Bwayo Super App")
+    .setMimeType(if(extension=="mov")"video/quicktime" else if(extension=="webm")"video/webm" else "video/mp4")
+    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,"Bwayo_"+postId+"."+extension)
+    .setAllowedOverMetered(true)
+    .setAllowedOverRoaming(false)
+   val manager=getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+   manager.enqueue(request)
+   msg("Download started. Check your phone's Downloads folder.")
+  }catch(x:Exception){msg("Could not start download: "+(x.message?:"error"))}
  }
  private fun sharePost(content:String,media:String){
   val shareText=content+(if(media.startsWith("http"))"\n"+media else "")
