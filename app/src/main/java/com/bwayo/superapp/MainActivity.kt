@@ -154,7 +154,7 @@ class MainActivity : Activity() {
   }
   }
   l.addView(publishButton)
-  l.addView(btn("MY PROFILE"){showProfile()});l.addView(btn("NOTIFICATIONS"){showNotifications()});l.addView(btn("INVITE FRIENDS"){inviteFriends()})
+  l.addView(btn("MY PROFILE"){showProfile()});l.addView(btn("MY POSTS"){showMyPosts()});l.addView(btn("EXPLORE COMMUNITY"){showExplore()});l.addView(btn("NOTIFICATIONS"){showNotifications()});l.addView(btn("HELP & SUPPORT"){showHelp()});l.addView(btn("ABOUT BWAYO"){showAbout()});l.addView(btn("INVITE FRIENDS"){inviteFriends()})
   if(isAdmin){
    l.addView(btn("OPEN ADMIN DASHBOARD  ⚙"){showAdmin()})
   }
@@ -277,6 +277,56 @@ class MainActivity : Activity() {
   val shareText=content+(if(media.startsWith("http"))"\n"+media else "")
   val intent=Intent(Intent.ACTION_SEND).apply{type="text/plain";putExtra(Intent.EXTRA_TEXT,shareText)}
   startActivity(Intent.createChooser(intent,"Share Bwayo post"))
+ }
+
+ private fun showExplore(){
+  val l=base();l.addView(heading("EXPLORE COMMUNITY"))
+  l.addView(TextView(this).apply{text="Discover the latest videos and posts shared by the Bwayo community.";textSize=15f;setTextColor(Color.DKGRAY);setPadding(8,8,8,14)})
+  feed=LinearLayout(this).apply{orientation=1}
+  l.addView(ScrollView(this).apply{addView(feed)},LinearLayout.LayoutParams(-1,0,1f))
+  l.addView(btn("Refresh explore"){refreshFeed()});l.addView(btn("Back to home"){loadHome()})
+  setContentView(l);refreshFeed()
+ }
+ private fun showMyPosts(){
+  val l=base();l.addView(heading("MY POSTS"))
+  val list=LinearLayout(this).apply{orientation=1}
+  l.addView(ScrollView(this).apply{addView(list)},LinearLayout.LayoutParams(-1,0,1f))
+  l.addView(btn("Back to home"){loadHome()});setContentView(l)
+  async{try{
+   val rows=JSONArray(req("/rest/v1/posts?select=id,content,media_url,created_at&user_id=eq."+userId+"&order=created_at.desc&limit=100"))
+   runOnUiThread{
+    if(rows.length()==0)list.addView(TextView(this).apply{text="You have not published any posts yet.";textSize=16f;setTextColor(Color.DKGRAY);setPadding(12,16,12,16)})
+    for(i in 0 until rows.length()){
+     val p=rows.getJSONObject(i);val media=p.optString("media_url");val pid=p.getString("id")
+     list.addView(TextView(this).apply{text=p.optString("content");textSize=16f;setTextColor(Color.DKGRAY);background=rounded(Color.WHITE,16);setPadding(16,16,16,16)})
+     if(media.startsWith("http")){list.addView(btn("Play my video"){showVideo(media)});list.addView(btn("Download my video"){downloadPost(media,pid)})}
+     list.addView(btn("Share my post"){sharePost(p.optString("content"),media)})
+     list.addView(Space(this).apply{minimumHeight=dp(8)})
+    }
+   }
+  }catch(x:Exception){runOnUiThread{msg("Could not load your posts: "+(x.message?:"error"))}}
+  }
+ }
+ private fun showAbout(){
+  val l=base();l.addView(heading("ABOUT BWAYO"))
+  l.addView(TextView(this).apply{
+   text="Bwayo Super App is a community space where members can share posts and videos, like and comment, follow community activity through notifications, and connect by sharing the app.\\n\\nBuilt to bring the Bwayo community together."
+   textSize=17f;setTextColor(Color.DKGRAY);setPadding(dp(12),dp(12),dp(12),dp(20))
+  })
+  l.addView(btn("Back to home"){loadHome()});setContentView(l)
+ }
+ private fun showHelp(){
+  val l=base();l.addView(heading("HELP & SUPPORT"))
+  val faqs=listOf(
+   "How do I publish?\\nWrite a caption, choose a video if you want, then tap Publish post.",
+   "How do I interact?\\nUse Like, Comments and Share under a post.",
+   "How do I download a video?\\nTap Download video and check your phone's Downloads folder.",
+   "How do I change my profile photo?\\nOpen My Profile, choose a photo and tap Save photo.",
+   "Having trouble signing in?\\nCheck your email and password and make sure your internet connection is working."
+  )
+  for(item in faqs)l.addView(TextView(this).apply{text=item;textSize=16f;setTextColor(Color.DKGRAY);background=rounded(Color.WHITE,14);setPadding(dp(14),dp(14),dp(14),dp(14))})
+  l.addView(btn("Contact support by email"){try{startActivity(Intent(Intent.ACTION_SENDTO,Uri.parse("mailto:support@bwayo.app")).putExtra(Intent.EXTRA_SUBJECT,"Bwayo Super App support"))}catch(_:Exception){msg("No email app found on this phone.")}})
+  l.addView(btn("Back to home"){loadHome()});setContentView(ScrollView(this).apply{addView(l)})
  }
  private fun showProfile(){
   val l=base();l.addView(heading("My profile"))
