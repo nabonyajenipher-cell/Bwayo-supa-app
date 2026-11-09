@@ -101,7 +101,16 @@ class MainActivity : Activity() {
   }catch(x:Exception){runOnUiThread{msg("Account setup needed: "+(x.message?:"unknown error"))}}}
  }
  private fun showHome(){
-  val l=base();l.addView(heading("Hello, "+displayName));l.addView(TextView(this).apply{text="Your community feed";textSize=18f;setTextColor(Color.DKGRAY)})
+  val l=base()
+  l.addView(heading(if(isAdmin)"BWAYO ADMIN" else "BWAYO COMMUNITY"))
+  l.addView(TextView(this).apply{
+   text=if(isAdmin)"ADMIN CONTROL CENTER  •  Welcome, "+displayName else "Welcome, "+displayName+"  •  Community member"
+   textSize=15f;gravity=Gravity.CENTER;setTextColor(if(isAdmin)Color.rgb(0,83,75) else Color.DKGRAY)
+   typeface=Typeface.create("sans-serif-medium",Typeface.BOLD)
+   background=rounded(if(isAdmin)Color.rgb(214,242,236) else Color.WHITE,16)
+   setPadding(dp(14),dp(14),dp(14),dp(14))
+  })
+  l.addView(TextView(this).apply{text=if(isAdmin)"Manage the community, members and posts below." else "Share videos, connect with people and explore posts.";textSize=16f;setTextColor(Color.DKGRAY);setPadding(4,dp(12),4,dp(8))})
   val input=EditText(this).apply{hint="Write a post..."};l.addView(input)
   l.addView(btn("Choose video to upload"){
    val pick=Intent(Intent.ACTION_GET_CONTENT).apply{type="video/*";addCategory(Intent.CATEGORY_OPENABLE)}
@@ -128,7 +137,9 @@ class MainActivity : Activity() {
   }
   l.addView(publishButton)
   l.addView(btn("MY PROFILE"){showProfile()});l.addView(btn("NOTIFICATIONS"){showNotifications()});l.addView(btn("INVITE FRIENDS"){inviteFriends()})
-  if(isAdmin)l.addView(btn("ADMIN DASHBOARD"){showAdmin()})
+  if(isAdmin){
+   l.addView(btn("OPEN ADMIN DASHBOARD  ⚙"){showAdmin()})
+  }
   l.addView(btn("Refresh feed"){refreshFeed()});l.addView(btn("Sign out"){signOut()})
   feed=LinearLayout(this).apply{orientation=1};l.addView(ScrollView(this).apply{addView(feed)},LinearLayout.LayoutParams(-1,0,1f));setContentView(l);refreshFeed()
  }
@@ -249,8 +260,14 @@ class MainActivity : Activity() {
   l.addView(btn("Back to feed"){loadHome()});setContentView(l)
  }
  private fun showAdmin(){
-  val l=base();l.addView(heading("Admin dashboard"))
-  l.addView(TextView(this).apply{text="Administrator: "+userEmail;setTextColor(Color.DKGRAY)})
+  val l=base()
+  l.addView(heading("ADMIN CONTROL CENTER"))
+  l.addView(TextView(this).apply{
+   text="RESTRICTED ADMIN AREA  •  "+(userEmail?: "Administrator")
+   textSize=14f;typeface=Typeface.create("sans-serif-medium",Typeface.BOLD)
+   setTextColor(Color.rgb(0,83,75));background=rounded(Color.rgb(214,242,236),16)
+   setPadding(dp(14),dp(14),dp(14),dp(14))
+  })
   val stats=TextView(this).apply{text="Loading totals...";textSize=17f;setTextColor(blue);setPadding(8,12,8,12)}
   l.addView(stats)
   val list=LinearLayout(this).apply{orientation=1}
