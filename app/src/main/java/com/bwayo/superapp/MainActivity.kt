@@ -126,46 +126,76 @@ class MainActivity : Activity() {
  }
  private fun showHome(){
   val l=base()
-  val top=LinearLayout(this).apply{orientation=0;gravity=Gravity.CENTER_VERTICAL;background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(30,58,138),Color.rgb(79,70,229),Color.rgb(124,58,237))).apply{cornerRadius=dp(20).toFloat()};elevation=dp(4).toFloat();setPadding(dp(16),dp(18),dp(16),dp(18))}
-  top.addView(TextView(this).apply{text="✦  BWAYO SUPER APP";textSize=19f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.WHITE)})
+  // Phone-first app bar
+  val top=LinearLayout(this).apply{
+   orientation=0;gravity=Gravity.CENTER_VERTICAL
+   background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(37,99,235),Color.rgb(79,70,229))).apply{cornerRadius=dp(18).toFloat()}
+   setPadding(dp(16),dp(14),dp(16),dp(14));elevation=dp(3).toFloat()
+  }
+  top.addView(TextView(this).apply{text="BWAYO";textSize=21f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.WHITE)})
+  top.addView(TextView(this).apply{text="  SUPER APP";textSize=12f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(224,231,255))})
   top.addView(Space(this),LinearLayout.LayoutParams(0,1,1f))
-  top.addView(TextView(this).apply{text=if(isAdmin)"ADMIN" else "MEMBER";textSize=11f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(49,46,129));background=rounded(Color.WHITE,12);setPadding(dp(10),dp(7),dp(10),dp(7))})
+  top.addView(TextView(this).apply{text=if(isAdmin)"ADMIN" else "MEMBER";textSize=10f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(49,46,129));background=rounded(Color.WHITE,14);setPadding(dp(10),dp(7),dp(10),dp(7))})
   l.addView(top)
-  l.addView(TextView(this).apply{text="Welcome, "+displayName+" 👋";textSize=25f;typeface=Typeface.create("sans-serif",Typeface.BOLD);setTextColor(Color.rgb(30,41,90));setPadding(dp(8),dp(22),dp(8),dp(4))})
-  l.addView(TextView(this).apply{text="Your space to connect, share and discover.";textSize=14f;setTextColor(Color.rgb(100,105,130));setPadding(dp(8),0,dp(8),dp(16))})
-  l.addView(TextView(this).apply{text="QUICK ACCESS";textSize=12f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.GRAY);setPadding(dp(8),dp(8),dp(8),dp(4))})
-  val actions=listOf<Pair<String,()->Unit>>(
-   "MY PROFILE" to {showProfile()},"MY POSTS" to {showMyPosts()},
-   "EXPLORE COMMUNITY" to {showExplore()},"NOTIFICATIONS" to {showNotifications()},
-   "HELP & SUPPORT" to {showHelp()},"APP FEATURES" to {showFeatures()},
-   "APP SETTINGS" to {showSettings()},"INVITE FRIENDS" to {inviteFriends()}
+  l.addView(TextView(this).apply{
+   text="Hello, "+displayName+" 👋";textSize=24f;typeface=Typeface.create("sans-serif",Typeface.BOLD)
+   setTextColor(Color.rgb(30,41,90));setPadding(dp(4),dp(22),dp(4),dp(3))
+  })
+  l.addView(TextView(this).apply{text="Your community, all in one place.";textSize=14f;setTextColor(Color.rgb(100,105,130));setPadding(dp(4),0,dp(4),dp(16))})
+  // Main phone shortcuts
+  l.addView(TextView(this).apply{text="GET STARTED";textSize=12f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.GRAY);setPadding(dp(4),dp(5),dp(4),dp(8))})
+  val primary=listOf<Pair<String,()->Unit>>(
+   "Explore community" to {showExplore()},
+   "My profile" to {showProfile()},
+   "My posts" to {showMyPosts()},
+   "Notifications" to {showNotifications()}
   )
-  var i=0
-  while(i<actions.size){
+  var index=0
+  while(index<primary.size){
    val row=LinearLayout(this).apply{orientation=0}
-   for(j in 0..1){
-    if(i<actions.size){
-     val item=actions[i]
-     val symbols=mapOf("MY PROFILE" to "👤","MY POSTS" to "📝","EXPLORE COMMUNITY" to "🌍","NOTIFICATIONS" to "🔔","HELP & SUPPORT" to "💬","APP FEATURES" to "✨","APP SETTINGS" to "⚙️","INVITE FRIENDS" to "🤝")
-     val card=TextView(this).apply{text=(symbols[item.first]?: "✦")+"\n"+item.first+"  ›";textSize=12f;typeface=Typeface.create("sans-serif",Typeface.BOLD);gravity=Gravity.CENTER;setTextColor(Color.rgb(49,46,129));background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.WHITE,Color.rgb(238,242,255))).apply{cornerRadius=dp(18).toFloat();setStroke(dp(1),Color.rgb(224,226,250))};elevation=dp(3).toFloat();setPadding(dp(6),dp(14),dp(6),dp(14));setOnClickListener{item.second()}}
-     row.addView(card,LinearLayout.LayoutParams(0,dp(68),1f).apply{setMargins(dp(4),dp(4),dp(4),dp(4))})
-     i++
-    }else row.addView(Space(this),LinearLayout.LayoutParams(0,dp(68),1f))
+   for(col in 0..1){
+    if(index<primary.size){
+     val item=primary[index]
+     val symbol=when(item.first){"Explore community"->"🌍";"My profile"->"👤";"My posts"->"📝";else->"🔔"}
+     val card=LinearLayout(this).apply{
+      orientation=1;gravity=Gravity.CENTER;background=rounded(Color.WHITE,18)
+      setPadding(dp(8),dp(13),dp(8),dp(13));elevation=dp(2).toFloat()
+      addView(TextView(this@MainActivity).apply{text=symbol;textSize=24f;gravity=Gravity.CENTER})
+      addView(TextView(this@MainActivity).apply{text=item.first;textSize=13f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(49,46,129));gravity=Gravity.CENTER;setPadding(0,dp(5),0,0)})
+      setOnClickListener{item.second()}
+     }
+     row.addView(card,LinearLayout.LayoutParams(0,dp(88),1f).apply{setMargins(dp(4),dp(4),dp(4),dp(4))})
+     index++
+    }else row.addView(Space(this),LinearLayout.LayoutParams(0,dp(88),1f))
    }
    l.addView(row)
   }
-  if(isAdmin)l.addView(btn("OPEN ADMIN DASHBOARD"){showAdmin()})
-  l.addView(TextView(this).apply{text="CREATE A POST";textSize=14f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.GRAY);setPadding(dp(8),dp(18),dp(8),dp(6))})
-  val input=EditText(this).apply{hint="Write a post...";minLines=2;gravity=Gravity.TOP;background=rounded(Color.WHITE,14);setPadding(dp(12),dp(10),dp(12),dp(10))}
+  l.addView(TextView(this).apply{text="MORE FEATURES";textSize=12f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.GRAY);setPadding(dp(4),dp(14),dp(4),dp(4))})
+  val more=listOf<Pair<String,()->Unit>>(
+   "App features" to {showFeatures()},
+   "App settings" to {showSettings()},
+   "Help & support" to {showHelp()},
+   "Invite friends" to {inviteFriends()}
+  )
+  more.forEach{item->
+   val line=LinearLayout(this).apply{
+    orientation=0;gravity=Gravity.CENTER_VERTICAL;background=rounded(Color.WHITE,14)
+    setPadding(dp(14),dp(4),dp(12),dp(4));elevation=dp(1).toFloat()
+    addView(TextView(this@MainActivity).apply{text=item.first;textSize=14f;typeface=Typeface.create("sans-serif-medium",Typeface.BOLD);setTextColor(Color.rgb(45,55,90))},LinearLayout.LayoutParams(0,dp(48),1f))
+    addView(TextView(this@MainActivity).apply{text="›";textSize=25f;setTextColor(Color.rgb(79,70,229))})
+    setOnClickListener{item.second()}
+   }
+   val params=LinearLayout.LayoutParams(-1,dp(52));params.setMargins(dp(4),dp(3),dp(4),dp(3));l.addView(line,params)
+  }
+  if(isAdmin)l.addView(btn("Admin dashboard"){showAdmin()})
+  l.addView(TextView(this).apply{text="CREATE A POST";textSize=14f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.GRAY);setPadding(dp(4),dp(20),dp(4),dp(7))})
+  val input=EditText(this).apply{hint="What's on your mind?";minLines=3;gravity=Gravity.TOP;background=rounded(Color.WHITE,14);setPadding(dp(12),dp(10),dp(12),dp(10))}
   l.addView(input)
-  l.addView(btn("Choose video to upload"){
-   val pick=Intent(Intent.ACTION_GET_CONTENT).apply{type="video/*";addCategory(Intent.CATEGORY_OPENABLE)}
-   startActivityForResult(Intent.createChooser(pick,"Select a video"),410)
-  })
+  l.addView(btn("Choose video"){val pick=Intent(Intent.ACTION_GET_CONTENT).apply{type="video/*";addCategory(Intent.CATEGORY_OPENABLE)};startActivityForResult(Intent.createChooser(pick,"Select a video"),410)})
   videoStatus=TextView(this).apply{text="No video selected";textSize=13f;setTextColor(Color.DKGRAY);setPadding(dp(8),dp(4),dp(8),dp(8))}
   l.addView(videoStatus)
   lateinit var publishButton:Button
-  publishButton=btn("PUBLISH POST"){
+  publishButton=btn("Publish post"){
    val content=input.text.toString().trim();val video=pickedVideo
    if(content.isBlank()&&video==null){msg("Write a caption or choose a video first.");return@btn}
    publishButton.isEnabled=false;publishButton.text="Publishing..."
@@ -174,22 +204,22 @@ class MainActivity : Activity() {
     val post=JSONObject().put("user_id",userId).put("content",content.ifBlank{"Video"})
     if(videoUrl!=null)post.put("media_url",videoUrl)
     req("/rest/v1/posts","POST",post,prefer="return=minimal");pickedVideo=null
-    runOnUiThread{input.text.clear();videoStatus?.text="No video selected";publishButton.isEnabled=true;publishButton.text="PUBLISH POST";msg("Post published successfully!");refreshFeed()}
-   }catch(x:Exception){runOnUiThread{publishButton.isEnabled=true;publishButton.text="PUBLISH POST";msg("Could not publish: "+(x.message?:"Unknown error"))}}
+    runOnUiThread{input.text.clear();videoStatus?.text="No video selected";publishButton.isEnabled=true;publishButton.text="Publish post";msg("Post published successfully!");refreshFeed()}
+   }catch(x:Exception){runOnUiThread{publishButton.isEnabled=true;publishButton.text="Publish post";msg("Could not publish: "+(x.message?:"Unknown error"))}}
    }
   }
   l.addView(publishButton)
-  val feedTitle=TextView(this).apply{text="COMMUNITY FEED";textSize=17f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(31,41,85));setPadding(dp(8),dp(20),dp(8),dp(8))}
-  l.addView(feedTitle)
-  val searchInput=EditText(this).apply{hint="Search posts by caption...";setSingleLine(true)}
+  l.addView(TextView(this).apply{text="COMMUNITY FEED";textSize=17f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(31,41,85));setPadding(dp(4),dp(22),dp(4),dp(8))})
+  val searchInput=EditText(this).apply{hint="Search community posts";setSingleLine(true)}
   l.addView(searchInput)
   l.addView(btn("Search posts"){refreshFeed(searchInput.text.toString().trim())})
   l.addView(btn("Show all posts"){searchInput.text.clear();refreshFeed()})
   l.addView(btn("Refresh feed"){refreshFeed()})
   feed=LinearLayout(this).apply{orientation=1}
   l.addView(feed)
-  l.addView(btn("SIGN OUT"){signOut()})
-  setScrollableContent(l);refreshFeed()
+  l.addView(btn("Sign out"){signOut()})
+  setScrollableContent(l)
+  refreshFeed()
  }
  override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){super.onActivityResult(requestCode,resultCode,data);if(requestCode==410&&resultCode==RESULT_OK){pickedVideo=data?.data;if(pickedVideo!=null){videoStatus?.text="Video selected ✓  Add a caption, then tap Publish post.";msg("Video selected. Add a caption and tap Publish post.")}else{videoStatus?.text="No video selected"}};if(requestCode==411&&resultCode==RESULT_OK){pickedAvatar=data?.data;if(pickedAvatar!=null)msg("Profile photo selected. Tap Save photo.")}}
  private fun uploadVideo(uri:Uri):String{
