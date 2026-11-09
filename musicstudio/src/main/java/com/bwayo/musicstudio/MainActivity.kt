@@ -3,6 +3,8 @@ package com.bwayo.musicstudio
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.content.Intent
+import android.net.Uri
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.AudioTrack
@@ -20,6 +22,7 @@ import kotlin.concurrent.thread
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.math.exp
+import kotlin.math.tanh
 
 class MainActivity : Activity() {
     private val sampleRate = 44100
@@ -27,6 +30,8 @@ class MainActivity : Activity() {
     private var player: AudioTrack? = null
     private var projectPlayer: MediaPlayer? = null
     private lateinit var projectsList: LinearLayout
+    private var importedBeat: ShortArray? = null
+    private lateinit var importedBeatLabel: TextView
     @Volatile private var recording = false
     private var output: File? = null
     private lateinit var status: TextView
@@ -55,6 +60,17 @@ class MainActivity : Activity() {
         root.addView(label("BWAYO MUSIC STUDIO", 25f))
         root.addView(label("Record your voice with a softer offline backing beat.", 15f, 0xFFD5D0E8.toInt()))
         root.addView(label("Choose a beat", 17f))
+        val importBeat = Button(this).apply { text = "＋  IMPORT MY BEAT (WAV)" }
+        importedBeatLabel = label("No custom beat selected", 13f, 0xFFD5D0E8.toInt())
+        root.addView(importBeat)
+        root.addView(importedBeatLabel)
+        importBeat.setOnClickListener {
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "audio/wav"
+            }
+            startActivityForResult(intent, 81)
+        }
         beatChoice = Spinner(this)
         beatChoice.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, beats)
         root.addView(beatChoice)
@@ -148,9 +164,16 @@ class MainActivity : Activity() {
                         if (count <= 0) continue
                         for (i in 0 until count) {
                             val beat = beatSample(sampleIndex, bpm, style)
-                            val mic = input[i].toInt() * 0.95
+                            // Gentle compression and soft limiting reduce harsh vocal peaks.
+                            val rawMic = input[i].toDouble() * 0.65
+                            val compressedMic = if (kotlin.math.abs(rawMic) > 6500.0) {
+                                (if (rawMic < 0) -1.0 else 1.0) * (6500.0 + (kotlin.math.abs(rawMic) - 6500.0) * 0.28)
+                            } else rawMic
+                            val mic = tanh(compressedMic / 25000.0) * 25000.0
+                            val custom = importedBeat
+                            val backing = if (custom != null && custom.isNotEmpty()) custom[(sampleIndex % custom.size).toInt()].toDouble() else beat
                             val beatGain = (beatVolume.progress / 100.0) * 0.25
-                            mixed[i] = (mic + beat * beatGain).toInt().coerceIn(-32768, 32767).toShort()
+                            mixed[i] = (mic + backing * beatGain).toInt().coerceIn(-32768, 32767).toShort()
                             sampleIndex++
                         }
                         outputPlayer.write(mixed, 0, count)
@@ -169,6 +192,71 @@ class MainActivity : Activity() {
             recording = false
             status.text = "Audio error: ${e.message}"
             releaseAudio()
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 81 && resultCode == RESULT_OK) {
+            val uri = data?.data ?: return
+            try {
+                val samples = loadWavBeat(uri)
+                importedBeat = samples
+                importedBeatLabel.text = "Custom beat loaded (" + (samples.size / sampleRate) + " sec). It will loop while recording."
+                status.text = "Your WAV beat is ready."
+            } catch (e: Exception) {
+                importedBeat = null
+                importedBeatLabel.text = "Could not load beat. Choose a PCM WAV file."
+                status.text = "Beat import error: " + e.message
+            }
+        }
+    }
+
+    // Imports standard 16-bit PCM WAV, mono or stereo, and resamples it to 44.1 kHz mono.
+    private fun loadWavBeat(uri: Uri): ShortArray {
+        val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            ?: throw IllegalArgumentException("Cannot open selected file")
+        if (bytes.size < 44 || String(bytes, 0, 4) != "RIFF" || String(bytes, 8, 4) != "WAVE")
+            throw IllegalArgumentException("Not a WAV file")
+        fun u16(pos: Int) = (bytes[pos].toInt() and 255) or ((bytes[pos + 1].toInt() and 255) shl 8)
+        fun i32(pos: Int) = (bytes[pos].toInt() and 255) or ((bytes[pos + 1].toInt() and 255) shl 8) or
+            ((bytes[pos + 2].toInt() and 255) shl 16) or (bytes[pos + 3].toInt() shl 24)
+        val format = u16(20)
+        val channels = u16(22)
+        val rate = i32(24)
+        val bits = u16(34)
+        if (format != 1 || bits != 16 || channels !in 1..2 || rate <= 0)
+            throw IllegalArgumentException("Use 16-bit PCM WAV, mono or stereo")
+        var pos = 12
+        var dataStart = -1
+        var dataSize = 0
+        while (pos + 8 <= bytes.size) {
+            val chunk = String(bytes, pos, 4)
+            val size = i32(pos + 4).coerceAtLeast(0)
+            if (chunk == "data") { dataStart = pos + 8; dataSize = minOf(size, bytes.size - dataStart); break }
+            pos += 8 + size + (size and 1)
+        }
+        if (dataStart < 0 || dataSize < channels * 2) throw IllegalArgumentException("WAV has no audio data")
+        val frames = dataSize / (channels * 2)
+        val mono = ShortArray(frames)
+        var p = dataStart
+        for (i in 0 until frames) {
+            var sum = 0
+            repeat(channels) {
+                val lo = bytes[p++].toInt() and 255
+                val hi = bytes[p++].toInt()
+                sum += (hi shl 8) or lo
+            }
+            mono[i] = (sum / channels).toShort()
+        }
+        if (rate == sampleRate) return mono
+        val outCount = (frames.toLong() * sampleRate / rate).toInt().coerceAtLeast(1)
+        return ShortArray(outCount) { i ->
+            val source = i.toDouble() * rate / sampleRate
+            val left = source.toInt().coerceIn(0, frames - 1)
+            val right = (left + 1).coerceAtMost(frames - 1)
+            val fraction = source - left
+            (mono[left] * (1.0 - fraction) + mono[right] * fraction).toInt().toShort()
         }
     }
 
