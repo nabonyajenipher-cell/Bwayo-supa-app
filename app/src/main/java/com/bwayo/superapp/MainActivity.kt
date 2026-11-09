@@ -50,6 +50,10 @@ class MainActivity : Activity() {
   setOnClickListener{a()}
  }
  private fun msg(s:String){Toast.makeText(this,s,Toast.LENGTH_LONG).show()}
+ private fun setScrollableContent(content:LinearLayout){
+  val scroll=ScrollView(this).apply{isFillViewport=true;addView(content,ScrollView.LayoutParams(-1,-2))}
+  setContentView(scroll)
+ }
  private fun req(path:String,method:String="GET",body:JSONObject?=null,bearer:String?=token,prefer:String?=null):String{
   val c=URL(baseUrl+path).openConnection() as HttpURLConnection
   c.requestMethod=method;c.connectTimeout=15000;c.readTimeout=25000
@@ -103,7 +107,7 @@ class MainActivity : Activity() {
    }
   }
   l.addView(signInButton)
-  setContentView(l)
+  setScrollableContent(l)
  }
  private fun save(o:JSONObject,name:String){
   val u=o.getJSONObject("user");token=o.getString("access_token");userId=u.getString("id");userEmail=u.optString("email")
@@ -163,7 +167,7 @@ class MainActivity : Activity() {
   l.addView(btn("Search posts"){refreshFeed(searchInput.text.toString().trim())})
   l.addView(btn("Show all posts"){searchInput.text.clear();refreshFeed()})
   l.addView(btn("Refresh feed"){refreshFeed()});l.addView(btn("Sign out"){signOut()})
-  feed=LinearLayout(this).apply{orientation=1};l.addView(ScrollView(this).apply{addView(feed)},LinearLayout.LayoutParams(-1,0,1f));setContentView(l);refreshFeed()
+  feed=LinearLayout(this).apply{orientation=1};l.addView(ScrollView(this).apply{isFillViewport=true;addView(feed)},LinearLayout.LayoutParams(-1,dp(420)));setScrollableContent(l);refreshFeed()
  }
  override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){super.onActivityResult(requestCode,resultCode,data);if(requestCode==410&&resultCode==RESULT_OK){pickedVideo=data?.data;if(pickedVideo!=null){videoStatus?.text="Video selected ✓  Add a caption, then tap Publish post.";msg("Video selected. Add a caption and tap Publish post.")}else{videoStatus?.text="No video selected"}};if(requestCode==411&&resultCode==RESULT_OK){pickedAvatar=data?.data;if(pickedAvatar!=null)msg("Profile photo selected. Tap Save photo.")}}
  private fun uploadVideo(uri:Uri):String{
@@ -313,7 +317,7 @@ class MainActivity : Activity() {
    text="Bwayo Super App is a community space where members can share posts and videos, like and comment, follow community activity through notifications, and connect by sharing the app.\\n\\nBuilt to bring the Bwayo community together."
    textSize=17f;setTextColor(Color.DKGRAY);setPadding(dp(12),dp(12),dp(12),dp(20))
   })
-  l.addView(btn("Back to home"){loadHome()});setContentView(l)
+  l.addView(btn("Back to home"){loadHome()});setScrollableContent(l)
  }
  private fun showHelp(){
   val l=base();l.addView(heading("HELP & SUPPORT"))
@@ -337,7 +341,7 @@ class MainActivity : Activity() {
   l.addView(TextView(this).apply{text="Name: "+displayName;textSize=18f;setTextColor(Color.DKGRAY);setPadding(8,12,8,12)})
   l.addView(TextView(this).apply{text="Email: "+(userEmail?: "Not available");textSize=16f;setTextColor(Color.DKGRAY);setPadding(8,8,8,12)})
   l.addView(TextView(this).apply{text="Account type: "+if(isAdmin)"Administrator" else "Member";textSize=16f;setTextColor(Color.DKGRAY);setPadding(8,8,8,12)})
-  l.addView(btn("Back to feed"){loadHome()});setContentView(l)
+  l.addView(btn("Back to feed"){loadHome()});setScrollableContent(l)
  }
  private fun showAdmin(){
   val l=base()
@@ -351,10 +355,10 @@ class MainActivity : Activity() {
   val stats=TextView(this).apply{text="Loading totals...";textSize=17f;setTextColor(blue);setPadding(8,12,8,12)}
   l.addView(stats)
   val list=LinearLayout(this).apply{orientation=1}
-  l.addView(ScrollView(this).apply{addView(list)},LinearLayout.LayoutParams(-1,0,1f))
+  l.addView(ScrollView(this).apply{addView(list)},LinearLayout.LayoutParams(-1,dp(480)))
   l.addView(btn("Refresh dashboard"){showAdmin()})
   l.addView(btn("Back to feed"){loadHome()})
-  setContentView(l)
+  setScrollableContent(l)
   async{try{
    val users=JSONArray(req("/rest/v1/profiles?select=id,name,role&order=created_at.desc"))
    val posts=fetchPosts()
