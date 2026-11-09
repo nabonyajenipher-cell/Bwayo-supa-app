@@ -158,7 +158,7 @@ class MainActivity : Activity() {
   }
   }
   l.addView(publishButton)
-  l.addView(btn("MY PROFILE"){showProfile()});l.addView(btn("MY POSTS"){showMyPosts()});l.addView(btn("EXPLORE COMMUNITY"){showExplore()});l.addView(btn("NOTIFICATIONS"){showNotifications()});l.addView(btn("HELP & SUPPORT"){showHelp()});l.addView(btn("ABOUT BWAYO"){showAbout()});l.addView(btn("INVITE FRIENDS"){inviteFriends()})
+  l.addView(btn("MY PROFILE"){showProfile()});l.addView(btn("MY POSTS"){showMyPosts()});l.addView(btn("EXPLORE COMMUNITY"){showExplore()});l.addView(btn("NOTIFICATIONS"){showNotifications()});l.addView(btn("HELP & SUPPORT"){showHelp()});l.addView(btn("COMMUNITY GUIDELINES"){showGuidelines()});l.addView(btn("PRIVACY & SAFETY"){showPrivacy()});l.addView(btn("TERMS OF USE"){showTerms()});l.addView(btn("APP FEATURES"){showFeatures()});l.addView(btn("GETTING STARTED"){showGettingStarted()});l.addView(btn("APP SETTINGS"){showSettings()});l.addView(btn("SEND FEEDBACK"){sendFeedback()});l.addView(btn("ABOUT BWAYO"){showAbout()});l.addView(btn("INVITE FRIENDS"){inviteFriends()})
   if(isAdmin){
    l.addView(btn("OPEN ADMIN DASHBOARD  ⚙"){showAdmin()})
   }
@@ -310,6 +310,64 @@ class MainActivity : Activity() {
    }
   }catch(x:Exception){runOnUiThread{msg("Could not load your posts: "+(x.message?:"error"))}}
   }
+ }
+ private fun showInfoPage(title:String,intro:String,sections:List<Pair<String,String>>){
+  val l=base();l.addView(heading(title))
+  l.addView(TextView(this).apply{text=intro;textSize=16f;setTextColor(Color.rgb(45,65,70));background=rounded(Color.WHITE,16);setPadding(dp(16),dp(16),dp(16),dp(16))})
+  for(section in sections){
+   l.addView(TextView(this).apply{text=section.first;textSize=19f;typeface=Typeface.create("sans-serif",Typeface.BOLD);setTextColor(Color.rgb(0,105,95));setPadding(dp(6),dp(18),dp(6),dp(6))})
+   l.addView(TextView(this).apply{text=section.second;textSize=16f;setTextColor(Color.DKGRAY);background=rounded(Color.WHITE,14);setPadding(dp(16),dp(14),dp(16),dp(14))})
+  }
+  l.addView(btn("Back to home"){loadHome()})
+  setScrollableContent(l)
+ }
+ private fun showGuidelines()=showInfoPage("COMMUNITY GUIDELINES","Help keep Bwayo welcoming and useful for everyone.",listOf(
+  "Be respectful" to "Treat other members kindly. Do not bully, threaten, harass or target people.",
+  "Share responsibly" to "Post content you own or have permission to share. Respect other people's privacy and creative work.",
+  "Keep posts appropriate" to "Do not publish illegal, dangerous, hateful, sexually exploitative or misleading content.",
+  "Protect personal information" to "Do not share passwords, private contact details, financial information or another person's private information.",
+  "Report problems" to "If you see harmful or abusive content, contact the app support team and include details of the post."
+ ))
+ private fun showPrivacy()=showInfoPage("PRIVACY & SAFETY","Use Bwayo carefully and protect your account.",listOf(
+  "Your account" to "Your email and account details are used to sign you in and associate your posts with your account.",
+  "Posts and videos" to "Assume content you publish may be visible to other members and may be shared outside the app. Do not post anything you want to keep private.",
+  "Profile photo" to "Only choose a profile image you are comfortable displaying to the community.",
+  "Account security" to "Use a strong password, do not share it, and sign out on devices that other people use.",
+  "Need help?" to "Use Help & Support or Send Feedback to contact the app team."
+ ))
+ private fun showTerms()=showInfoPage("TERMS OF USE","By using Bwayo Super App, you agree to use it responsibly.",listOf(
+  "Your responsibility" to "You are responsible for the content you upload and for ensuring you have the right to share it.",
+  "Acceptable use" to "Do not misuse the app, attempt unauthorized access, disrupt services or upload harmful content.",
+  "Content visibility" to "Posts and videos may be viewed, downloaded or shared by other people. Publish only content you are comfortable sharing.",
+  "Moderation" to "Administrators may remove content or restrict accounts that violate these rules.",
+  "Updates" to "These in-app guidelines may be updated as the community and app develop."
+ ))
+ private fun showFeatures()=showInfoPage("BWAYO APP FEATURES","Explore the tools available in your community app.",listOf(
+  "Community feed" to "Browse recent posts and videos, refresh the feed and search captions.",
+  "Create posts" to "Write a caption, choose a video and publish it for the community.",
+  "Interact" to "Like posts, add comments and share posts with other apps.",
+  "Your profile" to "View your account details and add a profile photo.",
+  "My Posts and Explore" to "Find your own posts or discover posts from the wider community.",
+  "Downloads and invitations" to "Download available videos and invite friends using the app link.",
+  "Notifications" to "View activity notifications and mark them as read."
+ ))
+ private fun showGettingStarted()=showInfoPage("GETTING STARTED","A quick guide to using Bwayo Super App.",listOf(
+  "1. Sign in" to "Create an account with your name, email and password, or sign in to an existing account.",
+  "2. Complete your profile" to "Open My Profile and choose a profile photo if you wish.",
+  "3. Publish" to "On the home page, write a caption, choose a video if needed, then tap Publish post.",
+  "4. Explore" to "Open Explore Community, search captions or refresh the feed to see recent posts.",
+  "5. Connect" to "Like, comment on and share posts. Open Notifications to check activity.",
+  "6. Invite friends" to "Tap Invite Friends and share the download link."
+ ))
+ private fun showSettings()=showInfoPage("APP SETTINGS","Manage your session and review your account details.",listOf(
+  "Signed-in account" to ("Name: "+displayName+"\\nEmail: "+(userEmail?: "Not available")),
+  "Account type" to (if(isAdmin)"Administrator account" else "Community member account"),
+  "Session security" to "Sign out when you finish using Bwayo on a shared phone. You can sign in again with your email and password.",
+  "Sign out" to "Use the Sign out button on the home page to end your current session."
+ ))
+ private fun sendFeedback(){
+  try{startActivity(Intent(Intent.ACTION_SENDTO,Uri.parse("mailto:support@bwayo.app")).putExtra(Intent.EXTRA_SUBJECT,"Bwayo app feedback").putExtra(Intent.EXTRA_TEXT,"My feedback about Bwayo Super App:\\n"))}
+  catch(_:Exception){msg("No email app found on this phone.")}
  }
  private fun showAbout(){
   val l=base();l.addView(heading("ABOUT BWAYO"))
