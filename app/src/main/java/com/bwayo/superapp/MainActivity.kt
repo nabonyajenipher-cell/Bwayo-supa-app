@@ -415,7 +415,7 @@ class MainActivity : Activity() {
   l.addView(TextView(this).apply{text="Discover the latest videos and posts shared by the Bwayo community.";textSize=15f;setTextColor(Color.DKGRAY);setPadding(8,8,8,14)})
   feed=LinearLayout(this).apply{orientation=1}
   l.addView(ScrollView(this).apply{addView(feed)},LinearLayout.LayoutParams(-1,0,1f))
-  l.addView(btn("Refresh explore"){refreshFeed()});l.addView(btn("Back to home"){loadHome()})
+  l.addView(btn("Refresh explore"){refreshFeed()});l.addView(btn("Back to home"){showOfflineHome()})
   setContentView(l);refreshFeed()
  }
  private fun showMyPosts(){
