@@ -30,8 +30,66 @@ class MainActivity : Activity() {
  private var token:String?=null; private var userId:String?=null; private var userEmail:String?=null
  private var displayName="Member"; private var isAdmin=false; private lateinit var feed:LinearLayout; private var pickedVideo:Uri?=null; private var videoStatus:TextView?=null; private var pickedAvatar:Uri?=null; private var avatarUrl:String?=null
  override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState)
-  val p=getSharedPreferences("bwayo_session",MODE_PRIVATE); token=p.getString("token",null); userId=p.getString("user_id",null); userEmail=p.getString("email",null); displayName=p.getString("name","Member")?:"Member"
-  if(token!=null&&userId!=null) loadHome() else showAuth()
+  displayName=getSharedPreferences("bwayo_offline",MODE_PRIVATE).getString("name","BWAYO PLAYER")?:"BWAYO PLAYER"
+  showOfflineHome()
+ }
+ private fun offlinePrefs()=getSharedPreferences("bwayo_offline",MODE_PRIVATE)
+ private fun offlinePosts():JSONArray=try{JSONArray(offlinePrefs().getString("posts","[]"))}catch(_:Exception){JSONArray()}
+ private fun showOfflineHome(){
+  val l=base()
+  l.addView(heading("BWAYO SUPER APP"))
+  l.addView(TextView(this).apply{text="OFFLINE MODE • No account or internet required";textSize=13f;gravity=Gravity.CENTER;setTextColor(Color.rgb(0,105,75));setPadding(8,14,8,14)})
+  l.addView(TextView(this).apply{text="Welcome, $displayName 👋";textSize=23f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(30,41,90));setPadding(4,12,4,4)})
+  l.addView(TextView(this).apply{text="Your apps and saved content stay on this phone.";textSize=14f;setTextColor(Color.DKGRAY);setPadding(4,0,4,12)})
+  l.addView(btn("🎮 PLAY BWAYO SUPER GAME"){showSimulator()})
+  l.addView(btn("📝 CREATE A LOCAL POST"){createOfflinePost()})
+  l.addView(btn("🌍 MY LOCAL COMMUNITY"){showOfflineFeed()})
+  l.addView(btn("👤 MY PROFILE"){showOfflineProfile()})
+  l.addView(btn("⚙️ SETTINGS & STORAGE"){showOfflineSettings()})
+  l.addView(btn("ℹ️ APP FEATURES"){showInfoPage("BWAYO SUPER APP • OFFLINE","Works without mobile data or Wi-Fi.",listOf("City life simulator" to "Play, work, earn money, buy homes and vehicles. Your game progress is saved on this phone.","Local community posts" to "Create and read text posts stored privately on this phone.","Local profile" to "Choose a display name saved on this phone.","Offline storage" to "Your posts and game progress remain available without internet."))})
+  l.addView(TextView(this).apply{text="BWAYO EMMANUEL • OWNER & FOUNDER";textSize=11f;gravity=Gravity.CENTER;setTextColor(Color.GRAY);setPadding(4,18,4,8)})
+  setScrollableContent(l)
+ }
+ private fun createOfflinePost(){
+  val input=EditText(this).apply{hint="Write something to save on this phone";minLines=3;gravity=Gravity.TOP}
+  AlertDialog.Builder(this).setTitle("Create local post").setView(input).setNegativeButton("Cancel",null).setPositiveButton("Save"){_,_->
+   val value=input.text.toString().trim()
+   if(value.isBlank()){msg("Write something first.");return@setPositiveButton}
+   val posts=offlinePosts()
+   posts.put(JSONObject().put("text",value).put("author",displayName).put("time",System.currentTimeMillis()))
+   offlinePrefs().edit().putString("posts",posts.toString()).apply()
+   msg("Post saved on this phone.");showOfflineFeed()
+  }.show()
+ }
+ private fun showOfflineFeed(){
+  val l=base();l.addView(heading("MY LOCAL COMMUNITY"))
+  val posts=offlinePosts()
+  if(posts.length()==0)l.addView(TextView(this).apply{text="No saved posts yet. Create your first local post.";textSize=16f;setTextColor(Color.DKGRAY);setPadding(8,20,8,20)})
+  for(i in posts.length()-1 downTo 0){
+   val p=posts.getJSONObject(i)
+   val card=LinearLayout(this).apply{orientation=1;background=rounded(Color.WHITE,14);setPadding(dp(14),dp(12),dp(14),dp(12))}
+   card.addView(TextView(this).apply{text=p.optString("author","BWAYO PLAYER");textSize=14f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(49,46,129))})
+   card.addView(TextView(this).apply{text=p.optString("text");textSize=16f;setTextColor(Color.DKGRAY);setPadding(0,dp(8),0,dp(8))})
+   card.addView(TextView(this).apply{text="Saved on this device";textSize=11f;setTextColor(Color.GRAY)})
+   l.addView(card,LinearLayout.LayoutParams(-1,-2).apply{setMargins(0,dp(6),0,dp(6))})
+  }
+  l.addView(btn("＋ NEW POST"){createOfflinePost()})
+  l.addView(btn("← HOME"){showOfflineHome()})
+  setScrollableContent(l)
+ }
+ private fun showOfflineProfile(){
+  val l=base();l.addView(heading("MY OFFLINE PROFILE"))
+  val name=EditText(this).apply{setText(displayName);hint="Your display name"}
+  l.addView(TextView(this).apply{text="Display name";textSize=14f;setTextColor(Color.DKGRAY)})
+  l.addView(name)
+  l.addView(btn("SAVE PROFILE"){val v=name.text.toString().trim();if(v.isBlank()){msg("Enter a name.");return@btn};displayName=v;offlinePrefs().edit().putString("name",v).apply();msg("Profile saved on this phone.");showOfflineHome()})
+  l.addView(btn("← HOME"){showOfflineHome()});setScrollableContent(l)
+ }
+ private fun showOfflineSettings(){
+  val l=base();l.addView(heading("OFFLINE SETTINGS"))
+  l.addView(TextView(this).apply{text="No sign-in, cloud account, or internet connection is needed. Your local profile, posts and simulator progress are stored on this device.";textSize=15f;setTextColor(Color.DKGRAY);setPadding(8,18,8,18)})
+  l.addView(btn("DELETE LOCAL POSTS"){AlertDialog.Builder(this).setTitle("Delete saved posts?").setMessage("This only deletes posts saved inside Bwayo on this phone.").setNegativeButton("Cancel",null).setPositiveButton("Delete"){_,_->offlinePrefs().edit().remove("posts").apply();msg("Local posts deleted.");showOfflineSettings()}.show()})
+  l.addView(btn("← HOME"){showOfflineHome()});setScrollableContent(l)
  }
  private fun dp(v:Int)= (v*resources.displayMetrics.density).toInt()
  private fun rounded(color:Int,radius:Int=18)=GradientDrawable().apply{setColor(color);cornerRadius=dp(radius).toFloat()}
@@ -340,7 +398,7 @@ class MainActivity : Activity() {
 
  private fun showSimulator(){
   val page=LinearLayout(this).apply{orientation=1;setBackgroundColor(Color.rgb(8,24,18))}
-  page.addView(btn("← Back to Bwayo Super App"){loadHome()})
+  page.addView(btn("← Back to Bwayo Super App"){showOfflineHome()})
   val game=WebView(this).apply{
    setBackgroundColor(Color.rgb(8,24,18))
    settings.javaScriptEnabled=true
