@@ -188,7 +188,7 @@ class MainActivity : Activity() {
  }
  private fun fetchPosts(search:String=""):JSONArray{
   val filter=if(search.isBlank())"" else "&content=ilike."+java.net.URLEncoder.encode("*"+search+"*","UTF-8")
-  return JSONArray(req("/rest/v1/posts?select=id,user_id,content,media_url,created_at,profiles(name,avatar_url)&order=created_at.desc&limit=20"+filter))
+  return JSONArray(req("/rest/v1/posts?select=id,user_id,content,media_url,created_at,profiles(name,avatar_url)&order=created_at.desc&limit=1000"+filter))
  }
  private fun refreshFeed(search:String=""){if(!::feed.isInitialized)return;async{try{
   val rows=fetchPosts(search)
