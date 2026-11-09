@@ -35,13 +35,13 @@ class MainActivity : Activity() {
  private fun rounded(color:Int,radius:Int=18)=GradientDrawable().apply{setColor(color);cornerRadius=dp(radius).toFloat()}
  private fun base()=LinearLayout(this).apply{
   orientation=1
-  background=GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(239,242,255),Color.rgb(250,251,255)))
+  background=GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(239,244,255),Color.rgb(248,245,255),Color.rgb(255,255,255)))
   setPadding(dp(18),dp(18),dp(18),dp(24))
  }
  private fun heading(s:String)=TextView(this).apply{
-  text=s;textSize=25f;setTextColor(Color.rgb(31,41,85));typeface=Typeface.create("sans-serif",Typeface.BOLD)
+  text=s;textSize=25f;setTextColor(Color.WHITE);typeface=Typeface.create("sans-serif",Typeface.BOLD)
   gravity=Gravity.CENTER;setPadding(dp(12),dp(22),dp(12),dp(22))
-  background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(224,231,255),Color.rgb(238,242,255))).apply{cornerRadius=dp(22).toFloat()}
+  background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(30,58,138),Color.rgb(79,70,229),Color.rgb(124,58,237))).apply{cornerRadius=dp(22).toFloat()}
   elevation=dp(2).toFloat()
  }
  private fun btn(s:String,a:()->Unit)=Button(this).apply{
@@ -126,13 +126,13 @@ class MainActivity : Activity() {
  }
  private fun showHome(){
   val l=base()
-  val top=LinearLayout(this).apply{orientation=0;gravity=Gravity.CENTER_VERTICAL;background=rounded(Color.WHITE,18);setPadding(dp(14),dp(14),dp(14),dp(14))}
-  top.addView(TextView(this).apply{text="BWAYO SUPER APP";textSize=21f;typeface=Typeface.DEFAULT_BOLD;setTextColor(blue)})
+  val top=LinearLayout(this).apply{orientation=0;gravity=Gravity.CENTER_VERTICAL;background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(30,58,138),Color.rgb(79,70,229),Color.rgb(124,58,237))).apply{cornerRadius=dp(20).toFloat()};elevation=dp(4).toFloat();setPadding(dp(16),dp(18),dp(16),dp(18))}
+  top.addView(TextView(this).apply{text="✦  BWAYO SUPER APP";textSize=19f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.WHITE)})
   top.addView(Space(this),LinearLayout.LayoutParams(0,1,1f))
-  top.addView(TextView(this).apply{text=if(isAdmin)"ADMIN" else "MEMBER";textSize=12f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.WHITE);background=rounded(blue,12);setPadding(dp(10),dp(7),dp(10),dp(7))})
+  top.addView(TextView(this).apply{text=if(isAdmin)"ADMIN" else "MEMBER";textSize=11f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(49,46,129));background=rounded(Color.WHITE,12);setPadding(dp(10),dp(7),dp(10),dp(7))})
   l.addView(top)
-  l.addView(TextView(this).apply{text="Welcome, "+displayName+" 👋";textSize=23f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(31,41,85));setPadding(dp(8),dp(20),dp(8),dp(4))})
-  l.addView(TextView(this).apply{text="Your community dashboard";textSize=14f;setTextColor(Color.DKGRAY);setPadding(dp(8),0,dp(8),dp(12))})
+  l.addView(TextView(this).apply{text="Welcome, "+displayName+" 👋";textSize=25f;typeface=Typeface.create("sans-serif",Typeface.BOLD);setTextColor(Color.rgb(30,41,90));setPadding(dp(8),dp(22),dp(8),dp(4))})
+  l.addView(TextView(this).apply{text="Your space to connect, share and discover.";textSize=14f;setTextColor(Color.rgb(100,105,130));setPadding(dp(8),0,dp(8),dp(16))})
   l.addView(TextView(this).apply{text="QUICK ACCESS";textSize=12f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.GRAY);setPadding(dp(8),dp(8),dp(8),dp(4))})
   val actions=listOf<Pair<String,()->Unit>>(
    "MY PROFILE" to {showProfile()},"MY POSTS" to {showMyPosts()},
@@ -146,7 +146,8 @@ class MainActivity : Activity() {
    for(j in 0..1){
     if(i<actions.size){
      val item=actions[i]
-     val card=TextView(this).apply{text=item.first+"  ›";textSize=13f;typeface=Typeface.DEFAULT_BOLD;gravity=Gravity.CENTER;setTextColor(Color.rgb(31,41,85));background=rounded(Color.WHITE,16);elevation=dp(2).toFloat();setPadding(dp(6),dp(18),dp(6),dp(18));setOnClickListener{item.second()}}
+     val symbols=mapOf("MY PROFILE" to "👤","MY POSTS" to "📝","EXPLORE COMMUNITY" to "🌍","NOTIFICATIONS" to "🔔","HELP & SUPPORT" to "💬","APP FEATURES" to "✨","APP SETTINGS" to "⚙️","INVITE FRIENDS" to "🤝")
+     val card=TextView(this).apply{text=(symbols[item.first]?: "✦")+"\n"+item.first+"  ›";textSize=12f;typeface=Typeface.create("sans-serif",Typeface.BOLD);gravity=Gravity.CENTER;setTextColor(Color.rgb(49,46,129));background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.WHITE,Color.rgb(238,242,255))).apply{cornerRadius=dp(18).toFloat();setStroke(dp(1),Color.rgb(224,226,250))};elevation=dp(3).toFloat();setPadding(dp(6),dp(14),dp(6),dp(14));setOnClickListener{item.second()}}
      row.addView(card,LinearLayout.LayoutParams(0,dp(68),1f).apply{setMargins(dp(4),dp(4),dp(4),dp(4))})
      i++
     }else row.addView(Space(this),LinearLayout.LayoutParams(0,dp(68),1f))
@@ -414,7 +415,7 @@ class MainActivity : Activity() {
  }
  private fun showProfile(){
   val l=base();l.addView(heading("My profile"))
-  val photo=ImageView(this).apply{adjustViewBounds=true;layoutParams=LinearLayout.LayoutParams(180,180).apply{gravity=Gravity.CENTER};setBackgroundColor(Color.LTGRAY)}
+  val photo=ImageView(this).apply{adjustViewBounds=true;layoutParams=LinearLayout.LayoutParams(dp(180),dp(180)).apply{gravity=Gravity.CENTER};background=rounded(Color.WHITE,90);clipToOutline=true;scaleType=ImageView.ScaleType.CENTER_CROP;setBackgroundColor(Color.rgb(225,231,255))}
   l.addView(photo);avatarUrl?.let{loadAvatar(it,photo)}
   l.addView(btn("Choose profile photo"){val pick=Intent(Intent.ACTION_GET_CONTENT).apply{type="image/*";addCategory(Intent.CATEGORY_OPENABLE)};startActivityForResult(Intent.createChooser(pick,"Choose profile photo"),411)})
   l.addView(btn("Save photo"){val uri=pickedAvatar;if(uri==null){msg("Choose a photo first.");return@btn};async{try{val url=uploadAvatar(uri);req("/rest/v1/profiles?id=eq."+userId,"PATCH",JSONObject().put("avatar_url",url),prefer="return=minimal");avatarUrl=url;pickedAvatar=null;runOnUiThread{msg("Profile photo saved");showProfile()}}catch(x:Exception){runOnUiThread{msg("Photo save failed: "+(x.message?: "error"))}}}})
