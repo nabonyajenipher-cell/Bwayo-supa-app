@@ -1,4 +1,4 @@
-name: Build Bwayo Super App APK
+name: Build Bwayo Super App (APK and AAB)
 on:
   push:
     branches: [main]
@@ -17,20 +17,29 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Build debug APK
-        run: gradle --no-daemon :app:assembleDebug
-      - name: Prepare clearly named APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk Bwayo-Super-App.apk
+      - name: Build Android APK and release bundle
+        run: |
+          gradle --no-daemon :app:assembleDebug :app:bundleRelease
+      - name: Prepare clearly named files
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk Bwayo-Super-App.apk
+          cp app/build/outputs/bundle/release/app-release.aab Bwayo-Super-App.aab
       - uses: actions/upload-artifact@v4
         with:
-          name: Bwayo-Super-App-APK
-          path: Bwayo-Super-App.apk
+          name: Bwayo-Super-App-Android-Files
+          path: |
+            Bwayo-Super-App.apk
+            Bwayo-Super-App.aab
           if-no-files-found: error
-      - name: Publish APK to public GitHub Release
+      - name: Publish APK and AAB to public GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: bwayo-v${{ github.run_number }}
           name: Bwayo Super App v${{ github.run_number }}
-          body: Download Bwayo-Super-App.apk and install it on your Android phone.
-          files: Bwayo-Super-App.apk
+          body: |
+            Android APK: install directly on Android devices.
+            Android App Bundle (AAB): unsigned release bundle; configure an upload keystore before submitting to Google Play.
+          files: |
+            Bwayo-Super-App.apk
+            Bwayo-Super-App.aab
           make_latest: true
