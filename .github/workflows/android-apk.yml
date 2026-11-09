@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,3 +24,11 @@ jobs:
           name: bwayo-super-app-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+      - name: Publish APK to public GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: bwayo-v${{ github.run_number }}
+          name: Bwayo Super App v${{ github.run_number }}
+          body: Download app-debug.apk below and install it on your Android phone.
+          files: app/build/outputs/apk/debug/app-debug.apk
+          make_latest: true
