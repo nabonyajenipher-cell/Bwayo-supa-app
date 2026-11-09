@@ -163,53 +163,58 @@ class MainActivity : Activity() {
  }
  override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){super.onActivityResult(requestCode,resultCode,data);if(requestCode==410&&resultCode==RESULT_OK){pickedVideo=data?.data;if(pickedVideo!=null){videoStatus?.text="Video selected ✓  Add a caption, then tap Publish post.";msg("Video selected. Add a caption and tap Publish post.")}else{videoStatus?.text="No video selected"}};if(requestCode==411&&resultCode==RESULT_OK){pickedAvatar=data?.data;if(pickedAvatar!=null)msg("Profile photo selected. Tap Save photo.")}}
  private fun uploadVideo(uri:Uri):String{
-  val bytes=contentResolver.openInputStream(uri)?.use{it.readBytes()}?:throw Exception("Cannot read selected video")
-  if(bytes.isEmpty())throw Exception("Selected video is empty")
-  if(bytes.size>100*1024*1024)throw Exception("Video is larger than 100 MB. Please choose a smaller video.")
+  val size=contentResolver.openAssetFileDescriptor(uri,"r")?.use{it.length}?:-1L
+  if(size==0L)throw Exception("Selected video is empty")
+  if(size>100L*1024*1024)throw Exception("Video is larger than 100 MB. Please choose a smaller video.")
   val ext=when(contentResolver.getType(uri)){"video/quicktime"->"mov";"video/webm"->"webm";else->"mp4"}
   val path=(userId?:throw Exception("Please sign in"))+"/"+java.util.UUID.randomUUID().toString()+"."+ext
   val c=URL(baseUrl+"/storage/v1/object/bwayo-videos/"+path).openConnection() as HttpURLConnection
   c.requestMethod="POST";c.connectTimeout=30000;c.readTimeout=60000;c.doOutput=true
   c.setRequestProperty("apikey",anonKey);c.setRequestProperty("Authorization","Bearer "+(token?:throw Exception("Please sign in")))
   c.setRequestProperty("Content-Type",contentResolver.getType(uri)?:"video/mp4");c.setRequestProperty("x-upsert","false")
-  c.outputStream.use{it.write(bytes)}
+  val source=contentResolver.openInputStream(uri)?:throw Exception("Cannot read selected video")
+  c.outputStream.use{output->source.use{input->val buffer=ByteArray(64*1024);while(true){val count=input.read(buffer);if(count<0)break;output.write(buffer,0,count)}}}
   val code=c.responseCode;val response=(if(code in 200..299)c.inputStream else c.errorStream)?.bufferedReader()?.use{it.readText()}.orEmpty();c.disconnect()
   if(code !in 200..299)throw Exception("Video upload failed ($code): "+response)
   return baseUrl+"/storage/v1/object/public/bwayo-videos/"+path
  }
- private fun fetchPosts():JSONArray=JSONArray(req("/rest/v1/posts?select=id,user_id,content,media_url,created_at,profiles(name,avatar_url)&order=created_at.desc&limit=100"))
- private fun refreshFeed(){if(!::feed.isInitialized)return;async{try{val rows=fetchPosts();runOnUiThread{
-  feed.removeAllViews();for(i in 0 until rows.length()){val r=rows.getJSONObject(i);val author=r.optJSONObject("profiles")?.optString("name")?.takeIf{it.isNotBlank()}?:"Member"
-   feed.addView(TextView(this).apply{text="👤  "+author+"\n\n"+r.optString("content");textSize=16f;setTextColor(Color.rgb(40,48,68));typeface=Typeface.create("sans-serif",Typeface.NORMAL);background=rounded(Color.WHITE,18);elevation=dp(2).toFloat();setPadding(dp(18),dp(18),dp(18),dp(18))})
-   val media=r.optString("media_url")
-   if(media.startsWith("http")){
-    val player=VideoView(this);player.setVideoURI(Uri.parse(media));player.setMediaController(MediaController(this).apply{setAnchorView(player)})
-    feed.addView(player,LinearLayout.LayoutParams(-1,520))
+ private fun fetchPosts():JSONArray=JSONArray(req("/rest/v1/posts?select=id,user_id,content,media_url,created_at,profiles(name,avatar_url)&order=created_at.desc&limit=20"))
+ private fun refreshFeed(){if(!::feed.isInitialized)return;async{try{
+  val rows=fetchPosts()
+  val ids=(0 until rows.length()).map{rows.getJSONObject(it).getString("id")}
+  val likes=if(ids.isEmpty()) JSONArray() else JSONArray(req("/rest/v1/likes?select=post_id,user_id&post_id=in.("+ids.joinToString(",")+")"))
+  val comments=if(ids.isEmpty()) JSONArray() else JSONArray(req("/rest/v1/comments?select=post_id&post_id=in.("+ids.joinToString(",")+")"))
+  val likeCounts=HashMap<String,Int>();val myLikes=HashSet<String>();val commentCounts=HashMap<String,Int>()
+  for(i in 0 until likes.length()){val x=likes.getJSONObject(i);val pid=x.optString("post_id");likeCounts[pid]=(likeCounts[pid]?:0)+1;if(x.optString("user_id")==userId)myLikes.add(pid)}
+  for(i in 0 until comments.length()){val pid=comments.getJSONObject(i).optString("post_id");commentCounts[pid]=(commentCounts[pid]?:0)+1}
+  runOnUiThread{
+   feed.removeAllViews()
+   for(i in 0 until rows.length()){
+    val r=rows.getJSONObject(i);val author=r.optJSONObject("profiles")?.optString("name")?.takeIf{it.isNotBlank()}?:"Member"
+    feed.addView(TextView(this).apply{text="👤  "+author+"\n\n"+r.optString("content");textSize=16f;setTextColor(Color.rgb(40,48,68));typeface=Typeface.create("sans-serif",Typeface.NORMAL);background=rounded(Color.WHITE,18);elevation=dp(2).toFloat();setPadding(dp(18),dp(18),dp(18),dp(18))})
+    val media=r.optString("media_url");val pid=r.getString("id")
+    if(media.startsWith("http"))feed.addView(btn("▶  Play video"){showVideo(media)})
+    val actions=LinearLayout(this).apply{orientation=0;gravity=Gravity.CENTER_VERTICAL}
+    val likeButton=btn((if(myLikes.contains(pid))"Unlike" else "Like")+" ("+(likeCounts[pid]?:0)+")"){toggleLike(pid)}
+    val commentButton=btn("Comments ("+(commentCounts[pid]?:0)+")"){showComments(pid)}
+    val shareButton=btn("Share"){sharePost(r.optString("content"),media)}
+    actions.addView(likeButton,LinearLayout.LayoutParams(0,-2,1f));actions.addView(commentButton,LinearLayout.LayoutParams(0,-2,1f));actions.addView(shareButton,LinearLayout.LayoutParams(0,-2,1f))
+    feed.addView(actions)
+    if(media.startsWith("http"))feed.addView(btn("Download video"){downloadPost(media,pid)})
+    feed.addView(Space(this).apply{minimumHeight=10})
    }
-   val pid=r.getString("id");val uid=userId?: ""
-   val actions=LinearLayout(this).apply{orientation=0;gravity=Gravity.CENTER_VERTICAL}
-   val likeButton=btn("Like"){toggleLike(pid)}
-   val commentButton=btn("Comments"){showComments(pid)}
-   val shareButton=btn("Share"){sharePost(r.optString("content"),media)}
-   actions.addView(likeButton,LinearLayout.LayoutParams(0,-2,1f))
-   actions.addView(commentButton,LinearLayout.LayoutParams(0,-2,1f))
-   actions.addView(shareButton,LinearLayout.LayoutParams(0,-2,1f))
-   feed.addView(actions)
-   if(media.startsWith("http")){
-    feed.addView(btn("Download video"){downloadPost(media,pid)})
-   }
-   async{try{
-    val likes=JSONArray(req("/rest/v1/likes?select=id&post_id=eq."+pid))
-    val mine=JSONArray(req("/rest/v1/likes?select=id&post_id=eq."+pid+"&user_id=eq."+uid))
-    val comments=JSONArray(req("/rest/v1/comments?select=id&post_id=eq."+pid))
-    runOnUiThread{
-     likeButton.text=(if(mine.length()>0)"Unlike" else "Like")+" ("+likes.length()+")"
-     commentButton.text="Comments ("+comments.length()+")"
-    }
-   }catch(_:Exception){}}
-   feed.addView(Space(this).apply{minimumHeight=10})
   }
- }}catch(x:Exception){runOnUiThread{msg("Feed error: "+(x.message?:"error"))}}}}
+ }catch(x:Exception){runOnUiThread{msg("Feed error: "+(x.message?:"error"))}}}}
+ private fun showVideo(media:String){
+  val player=VideoView(this)
+  val panel=LinearLayout(this).apply{orientation=1;setPadding(dp(8),dp(8),dp(8),dp(8));addView(player,LinearLayout.LayoutParams(-1,dp(240)))}
+  val dialog=AlertDialog.Builder(this).setTitle("Bwayo video").setView(panel).setPositiveButton("Close",null).create()
+  player.setMediaController(MediaController(this).apply{setAnchorView(player)})
+  player.setVideoURI(Uri.parse(media))
+  player.setOnPreparedListener{it.start()}
+  dialog.setOnDismissListener{player.stopPlayback()}
+  dialog.show()
+ }
  private fun toggleLike(postId:String){
   val uid=userId?:return
   async{try{
