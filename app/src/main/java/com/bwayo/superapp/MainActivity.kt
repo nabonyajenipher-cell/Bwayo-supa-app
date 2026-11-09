@@ -158,6 +158,10 @@ class MainActivity : Activity() {
   if(isAdmin){
    l.addView(btn("OPEN ADMIN DASHBOARD  ⚙"){showAdmin()})
   }
+  val searchInput=EditText(this).apply{hint="Search posts by caption...";singleLine=true}
+  l.addView(searchInput)
+  l.addView(btn("Search posts"){refreshFeed(searchInput.text.toString().trim())})
+  l.addView(btn("Show all posts"){searchInput.text.clear();refreshFeed()})
   l.addView(btn("Refresh feed"){refreshFeed()});l.addView(btn("Sign out"){signOut()})
   feed=LinearLayout(this).apply{orientation=1};l.addView(ScrollView(this).apply{addView(feed)},LinearLayout.LayoutParams(-1,0,1f));setContentView(l);refreshFeed()
  }
@@ -178,9 +182,12 @@ class MainActivity : Activity() {
   if(code !in 200..299)throw Exception("Video upload failed ($code): "+response)
   return baseUrl+"/storage/v1/object/public/bwayo-videos/"+path
  }
- private fun fetchPosts():JSONArray=JSONArray(req("/rest/v1/posts?select=id,user_id,content,media_url,created_at,profiles(name,avatar_url)&order=created_at.desc&limit=20"))
- private fun refreshFeed(){if(!::feed.isInitialized)return;async{try{
-  val rows=fetchPosts()
+ private fun fetchPosts(search:String=""):JSONArray{
+  val filter=if(search.isBlank())"" else "&content=ilike."+java.net.URLEncoder.encode("*"+search+"*","UTF-8")
+  return JSONArray(req("/rest/v1/posts?select=id,user_id,content,media_url,created_at,profiles(name,avatar_url)&order=created_at.desc&limit=20"+filter))
+ }
+ private fun refreshFeed(search:String=""){if(!::feed.isInitialized)return;async{try{
+  val rows=fetchPosts(search)
   val ids=(0 until rows.length()).map{rows.getJSONObject(it).getString("id")}
   val likes=if(ids.isEmpty()) JSONArray() else JSONArray(req("/rest/v1/likes?select=post_id,user_id&post_id=in.("+ids.joinToString(",")+")"))
   val comments=if(ids.isEmpty()) JSONArray() else JSONArray(req("/rest/v1/comments?select=post_id&post_id=in.("+ids.joinToString(",")+")"))
@@ -370,8 +377,8 @@ class MainActivity : Activity() {
 
 
  private fun inviteFriends(){
-  val downloadLink="https://github.com/nabonyajenipher-cell/Bwayo-supa-app/actions"
-  val message="Join me on Bwayo Super App! Download the Android app here: "+downloadLink+"\nOpen the latest successful Android APK build, download the bwayo-super-app-debug-apk artifact, extract the ZIP, and install the APK."
+  val downloadLink="https://github.com/nabonyajenipher-cell/Bwayo-supa-app/releases/latest/download/app-debug.apk"
+  val message="Join me on Bwayo Super App! Download and install the app here: "+downloadLink
   val intent=Intent(Intent.ACTION_SEND).apply{type="text/plain";putExtra(Intent.EXTRA_TEXT,message)}
   startActivity(Intent.createChooser(intent,"Invite friends to Bwayo Super App"))
  }
