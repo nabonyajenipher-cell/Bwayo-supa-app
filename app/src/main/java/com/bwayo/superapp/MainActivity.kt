@@ -35,18 +35,20 @@ class MainActivity : Activity() {
  private fun rounded(color:Int,radius:Int=18)=GradientDrawable().apply{setColor(color);cornerRadius=dp(radius).toFloat()}
  private fun base()=LinearLayout(this).apply{
   orientation=1
-  background=GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(242,247,247),Color.rgb(250,252,252)))
-  setPadding(dp(18),dp(18),dp(18),dp(22))
+  background=GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,intArrayOf(Color.rgb(239,242,255),Color.rgb(250,251,255)))
+  setPadding(dp(18),dp(18),dp(18),dp(24))
  }
  private fun heading(s:String)=TextView(this).apply{
-  text=s;textSize=26f;setTextColor(Color.rgb(15,48,58));typeface=Typeface.create("sans-serif",Typeface.BOLD)
-  gravity=Gravity.CENTER;setPadding(dp(8),dp(18),dp(8),dp(20))
+  text=s;textSize=25f;setTextColor(Color.rgb(31,41,85));typeface=Typeface.create("sans-serif",Typeface.BOLD)
+  gravity=Gravity.CENTER;setPadding(dp(12),dp(22),dp(12),dp(22))
+  background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(224,231,255),Color.rgb(238,242,255))).apply{cornerRadius=dp(22).toFloat()}
+  elevation=dp(2).toFloat()
  }
  private fun btn(s:String,a:()->Unit)=Button(this).apply{
   text=s;textSize=14f;isAllCaps=false;typeface=Typeface.create("sans-serif-medium",Typeface.BOLD)
-  setTextColor(Color.WHITE);background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(0,137,123),Color.rgb(0,105,125))).apply{cornerRadius=dp(18).toFloat()}
-  elevation=dp(4).toFloat();setPadding(dp(16),dp(9),dp(16),dp(9))
-  val lp=LinearLayout.LayoutParams(-1,dp(52));lp.setMargins(0,dp(7),0,dp(7));layoutParams=lp
+  setTextColor(Color.WHITE);background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(79,70,229),Color.rgb(37,99,235))).apply{cornerRadius=dp(16).toFloat()}
+  elevation=dp(3).toFloat();setPadding(dp(16),dp(10),dp(16),dp(10))
+  val lp=LinearLayout.LayoutParams(-1,dp(54));lp.setMargins(0,dp(8),0,dp(8));layoutParams=lp
   setOnClickListener{a()}
  }
  private fun msg(s:String){Toast.makeText(this,s,Toast.LENGTH_LONG).show()}
@@ -489,7 +491,7 @@ class MainActivity : Activity() {
 
 
  private fun inviteFriends(){
-  val downloadLink="https://github.com/nabonyajenipher-cell/Bwayo-supa-app/releases/latest/download/app-debug.apk"
+  val downloadLink="https://github.com/nabonyajenipher-cell/Bwayo-supa-app/releases/latest/download/Bwayo-Super-App.apk"
   val message="Join me on Bwayo Super App! Download and install the app here: "+downloadLink
   val intent=Intent(Intent.ACTION_SEND).apply{type="text/plain";putExtra(Intent.EXTRA_TEXT,message)}
   startActivity(Intent.createChooser(intent,"Invite friends to Bwayo Super App"))
