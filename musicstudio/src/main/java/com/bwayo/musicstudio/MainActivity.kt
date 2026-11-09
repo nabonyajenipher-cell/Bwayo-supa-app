@@ -7,6 +7,7 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.AudioTrack
 import android.media.MediaRecorder
+import android.media.MediaPlayer
 import android.media.AudioManager
 import android.os.Bundle
 import android.os.Environment
@@ -24,6 +25,8 @@ class MainActivity : Activity() {
     private val sampleRate = 44100
     private var recorder: AudioRecord? = null
     private var player: AudioTrack? = null
+    private var projectPlayer: MediaPlayer? = null
+    private lateinit var projectsList: LinearLayout
     @Volatile private var recording = false
     private var output: File? = null
     private lateinit var status: TextView
@@ -83,7 +86,14 @@ class MainActivity : Activity() {
         root.addView(stop)
         status = label("Ready. Headphones are recommended to reduce beat echo.", 14f, 0xFFBEB6D8.toInt())
         root.addView(status)
+        root.addView(label("RECORDED PROJECTS", 19f))
+        val refresh = Button(this).apply { text = "↻  REFRESH PROJECTS" }
+        root.addView(refresh)
+        projectsList = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        root.addView(projectsList)
+        refresh.setOnClickListener { refreshProjects() }
         setContentView(root)
+        refreshProjects()
 
         start.setOnClickListener {
             if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
@@ -151,7 +161,8 @@ class MainActivity : Activity() {
                     writeWavHeader(file, sampleIndex.toInt() * 2)
                 }
                 runOnUiThread {
-                    status.text = "Saved in app Music folder: ${file.name}"
+                    status.text = "Saved recording: ${file.name}"
+                    refreshProjects()
                 }
             }
         } catch (e: Exception) {
@@ -183,6 +194,76 @@ class MainActivity : Activity() {
         return v
     }
 
+    private fun refreshProjects() {
+        if (!::projectsList.isInitialized) return
+        projectsList.removeAllViews()
+        val dir = getExternalFilesDir(Environment.DIRECTORY_MUSIC) ?: filesDir
+        val files = dir.listFiles()?.filter { it.isFile && it.extension.equals("wav", true) }?.sortedByDescending { it.lastModified() } ?: emptyList()
+        if (files.isEmpty()) {
+            projectsList.addView(TextView(this).apply {
+                text = "No recordings yet. Your saved songs will appear here."
+                textSize = 14f
+                setTextColor(0xFFD5D0E8.toInt())
+                setPadding(0, 12, 0, 18)
+            })
+            return
+        }
+        files.forEach { file ->
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(12, 10, 12, 10)
+                setBackgroundColor(0xFF28223F.toInt())
+            }
+            row.addView(TextView(this).apply {
+                text = file.name
+                textSize = 14f
+                setTextColor(0xFFFFFFFF.toInt())
+            })
+            val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            val playButton = Button(this).apply { text = "▶ PLAY" }
+            val stopButton = Button(this).apply { text = "■ STOP" }
+            actions.addView(playButton, LinearLayout.LayoutParams(0, -2, 1f))
+            actions.addView(stopButton, LinearLayout.LayoutParams(0, -2, 1f))
+            row.addView(actions)
+            playButton.setOnClickListener { playProject(file) }
+            stopButton.setOnClickListener { stopProjectPlayback() }
+            projectsList.addView(row)
+            projectsList.addView(TextView(this).apply { text = " " })
+        }
+    }
+
+    private fun playProject(file: File) {
+        stopProjectPlayback()
+        try {
+            val mp = MediaPlayer()
+            projectPlayer = mp
+            mp.setDataSource(file.absolutePath)
+            mp.setOnCompletionListener {
+                it.release()
+                if (projectPlayer === it) projectPlayer = null
+                status.text = "Finished playing: ${file.name}"
+            }
+            mp.setOnErrorListener { it, _, _ ->
+                it.release()
+                if (projectPlayer === it) projectPlayer = null
+                status.text = "Could not play this recording."
+                true
+            }
+            mp.prepare()
+            mp.start()
+            status.text = "Playing: ${file.name}"
+        } catch (e: Exception) {
+            status.text = "Playback error: ${e.message}"
+            stopProjectPlayback()
+        }
+    }
+
+    private fun stopProjectPlayback() {
+        try { projectPlayer?.stop() } catch (_: Exception) {}
+        try { projectPlayer?.release() } catch (_: Exception) {}
+        projectPlayer = null
+    }
+
     private fun stopRecording() {
         recording = false
         try { recorder?.stop() } catch (_: Exception) {}
@@ -209,6 +290,7 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         if (recording) stopRecording()
+        stopProjectPlayback()
         super.onDestroy()
     }
 }
