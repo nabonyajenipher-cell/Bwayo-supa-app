@@ -13,6 +13,8 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.widget.*
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -148,7 +150,8 @@ class MainActivity : Activity() {
    "Explore community" to {showExplore()},
    "My profile" to {showProfile()},
    "My posts" to {showMyPosts()},
-   "Notifications" to {showNotifications()}
+   "Notifications" to {showNotifications()},
+   "Play simulator" to {showSimulator()}
   )
   var index=0
   while(index<primary.size){
@@ -156,7 +159,7 @@ class MainActivity : Activity() {
    for(col in 0..1){
     if(index<primary.size){
      val item=primary[index]
-     val symbol=when(item.first){"Explore community"->"🌍";"My profile"->"👤";"My posts"->"📝";else->"🔔"}
+     val symbol=when(item.first){"Explore community"->"🌍";"My profile"->"👤";"My posts"->"📝";"Play simulator"->"🎮";else->"🔔"}
      val card=LinearLayout(this).apply{
       orientation=1;gravity=Gravity.CENTER;background=rounded(Color.WHITE,18)
       setPadding(dp(8),dp(13),dp(8),dp(13));elevation=dp(2).toFloat()
@@ -335,6 +338,20 @@ class MainActivity : Activity() {
   startActivity(Intent.createChooser(intent,"Share Bwayo post"))
  }
 
+ private fun showSimulator(){
+  val page=LinearLayout(this).apply{orientation=1;setBackgroundColor(Color.rgb(8,24,18))}
+  page.addView(btn("← Back to Bwayo Super App"){loadHome()})
+  val game=WebView(this).apply{
+   setBackgroundColor(Color.rgb(8,24,18))
+   settings.javaScriptEnabled=true
+   settings.domStorageEnabled=true
+   settings.allowFileAccess=true
+   webViewClient=WebViewClient()
+   loadUrl("file:///android_asset/index.html")
+  }
+  page.addView(game,LinearLayout.LayoutParams(-1,0,1f))
+  setContentView(page)
+ }
  private fun showExplore(){
   val l=base();l.addView(heading("EXPLORE COMMUNITY"))
   l.addView(TextView(this).apply{text="Discover the latest videos and posts shared by the Bwayo community.";textSize=15f;setTextColor(Color.DKGRAY);setPadding(8,8,8,14)})
