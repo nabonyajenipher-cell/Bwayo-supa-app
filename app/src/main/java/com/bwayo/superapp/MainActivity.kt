@@ -24,7 +24,7 @@ class MainActivity : Activity() {
  private val blue=Color.rgb(13,71,161)
  private val baseUrl="https://pxjiadrraofmnreffvxx.supabase.co"
  private val anonKey="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4amlhZHJyYW9mbW5yZWZmdnh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxNDc4MjcsImV4cCI6MjEwOTcyMzgyN30.wr1UqU5WAq3kp-sV0Hb0xWMgDzNq8ycwluCTe7ajInk"
- private val worker=Executors.newSingleThreadExecutor()
+ private val worker=Executors.newFixedThreadPool(4)
  private var token:String?=null; private var userId:String?=null; private var userEmail:String?=null
  private var displayName="Member"; private var isAdmin=false; private lateinit var feed:LinearLayout; private var pickedVideo:Uri?=null; private var videoStatus:TextView?=null; private var pickedAvatar:Uri?=null; private var avatarUrl:String?=null
  override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState)
@@ -52,7 +52,7 @@ class MainActivity : Activity() {
  private fun msg(s:String){Toast.makeText(this,s,Toast.LENGTH_LONG).show()}
  private fun req(path:String,method:String="GET",body:JSONObject?=null,bearer:String?=token,prefer:String?=null):String{
   val c=URL(baseUrl+path).openConnection() as HttpURLConnection
-  c.requestMethod=method;c.connectTimeout=60000;c.readTimeout=60000
+  c.requestMethod=method;c.connectTimeout=15000;c.readTimeout=25000
   c.setRequestProperty("apikey",anonKey);c.setRequestProperty("Content-Type","application/json")
   if(bearer!=null)c.setRequestProperty("Authorization","Bearer "+bearer)
   if(prefer!=null)c.setRequestProperty("Prefer",prefer)
@@ -69,22 +69,40 @@ class MainActivity : Activity() {
   val e=EditText(this).apply{hint="Email address";inputType=33}
   val p=EditText(this).apply{hint="Password (at least 6 characters)";inputType=129}
   l.addView(n);l.addView(e);l.addView(p)
-  l.addView(btn("Create account"){
+  val authStatus=TextView(this).apply{text="";textSize=14f;gravity=Gravity.CENTER;setTextColor(Color.rgb(0,105,95));setPadding(8,8,8,8)}
+  l.addView(authStatus)
+  lateinit var createButton:Button
+  lateinit var signInButton:Button
+  fun setAuthBusy(busy:Boolean,message:String){
+   createButton.isEnabled=!busy;signInButton.isEnabled=!busy
+   createButton.text=if(busy)"Creating account..." else "Create account"
+   signInButton.text=if(busy)"Signing in..." else "Sign in"
+   authStatus.text=message
+  }
+  createButton=btn("Create account"){
    val name=n.text.toString().trim();val email=e.text.toString().trim();val pass=p.text.toString()
    if(name.isBlank()||email.isBlank()||pass.length<6){msg("Enter name, email and password of at least 6 characters.");return@btn}
+   setAuthBusy(true,"Creating your account securely...")
    async{try{
     val payload=JSONObject().put("email",email).put("password",pass).put("data",JSONObject().put("name",name))
     val o=JSONObject(req("/auth/v1/signup","POST",payload,null))
     if(o.optString("access_token").isNotBlank()&&o.has("user")){save(o,name);runOnUiThread{loadHome()}}
-    else runOnUiThread{msg("Account created. Check your email to confirm, then sign in.")}
-   }catch(x:Exception){runOnUiThread{msg(x.message?:"Registration failed")}}}
-  })
-  l.addView(btn("Sign in"){
+    else runOnUiThread{setAuthBusy(false,"Account created. Check your email, then sign in.");msg("Account created. Check your email to confirm, then sign in.")}
+   }catch(x:Exception){runOnUiThread{setAuthBusy(false,"Please try again.");msg(x.message?:"Registration failed")}}
+   }
+  }
+  l.addView(createButton)
+  signInButton=btn("Sign in"){
    val email=e.text.toString().trim();val pass=p.text.toString()
    if(email.isBlank()||pass.isBlank()){msg("Enter email and password.");return@btn}
-   async{try{val o=JSONObject(req("/auth/v1/token?grant_type=password","POST",JSONObject().put("email",email).put("password",pass),null));save(o,n.text.toString().trim());runOnUiThread{loadHome()}}
-   catch(x:Exception){runOnUiThread{msg(x.message?:"Sign in failed")}}}
-  })
+   setAuthBusy(true,"Signing you in...")
+   async{try{
+    val o=JSONObject(req("/auth/v1/token?grant_type=password","POST",JSONObject().put("email",email).put("password",pass),null))
+    save(o,n.text.toString().trim());runOnUiThread{loadHome()}
+   }catch(x:Exception){runOnUiThread{setAuthBusy(false,"Sign in failed. Check your details and try again.");msg(x.message?:"Sign in failed")}}
+   }
+  }
+  l.addView(signInButton)
   setContentView(l)
  }
  private fun save(o:JSONObject,name:String){
