@@ -19,16 +19,18 @@ jobs:
           gradle-version: '8.9'
       - name: Build debug APK
         run: gradle --no-daemon :app:assembleDebug
+      - name: Prepare clearly named APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk Bwayo-Super-App.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: bwayo-super-app-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: Bwayo-Super-App-APK
+          path: Bwayo-Super-App.apk
           if-no-files-found: error
       - name: Publish APK to public GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: bwayo-v${{ github.run_number }}
           name: Bwayo Super App v${{ github.run_number }}
-          body: Download app-debug.apk below and install it on your Android phone.
-          files: app/build/outputs/apk/debug/app-debug.apk
+          body: Download Bwayo-Super-App.apk and install it on your Android phone.
+          files: Bwayo-Super-App.apk
           make_latest: true
