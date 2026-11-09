@@ -17,7 +17,22 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Prepare Google Play upload signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.BWAYO_UPLOAD_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/bwayo-upload.jks"
+            echo "BWAYO_KEYSTORE_PATH=$RUNNER_TEMP/bwayo-upload.jks" >> "$GITHUB_ENV"
+            echo "Google Play upload key found; release bundle will be signed."
+          else
+            echo "Google Play upload key is not configured; release bundle will be unsigned."
+          fi
       - name: Build Android APK and release bundle
+        env:
+          BWAYO_KEYSTORE_PASSWORD: ${{ secrets.BWAYO_UPLOAD_STORE_PASSWORD }}
+          BWAYO_KEY_ALIAS: ${{ secrets.BWAYO_UPLOAD_KEY_ALIAS }}
+          BWAYO_KEY_PASSWORD: ${{ secrets.BWAYO_UPLOAD_KEY_PASSWORD }}
         run: |
           gradle --no-daemon :app:assembleDebug :app:bundleRelease
       - name: Prepare clearly named files
@@ -38,7 +53,7 @@ jobs:
           name: Bwayo Super App v${{ github.run_number }}
           body: |
             Android APK: install directly on Android devices.
-            Android App Bundle (AAB): unsigned release bundle; configure an upload keystore before submitting to Google Play.
+            Android App Bundle (AAB): signed for Google Play only when the owner has configured the four BWAYO_UPLOAD_* repository secrets.
           files: |
             Bwayo-Super-App.apk
             Bwayo-Super-App.aab
