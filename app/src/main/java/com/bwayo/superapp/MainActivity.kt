@@ -158,7 +158,7 @@ class MainActivity : Activity() {
   if(isAdmin){
    l.addView(btn("OPEN ADMIN DASHBOARD  ⚙"){showAdmin()})
   }
-  val searchInput=EditText(this).apply{hint="Search posts by caption...";singleLine=true}
+  val searchInput=EditText(this).apply{hint="Search posts by caption...";setSingleLine(true)}
   l.addView(searchInput)
   l.addView(btn("Search posts"){refreshFeed(searchInput.text.toString().trim())})
   l.addView(btn("Show all posts"){searchInput.text.clear();refreshFeed()})
