@@ -30,6 +30,8 @@ class MainActivity : Activity() {
     private lateinit var beatChoice: Spinner
     private lateinit var tempoLabel: TextView
     private lateinit var tempo: SeekBar
+    private lateinit var beatVolume: SeekBar
+    private lateinit var beatVolumeLabel: TextView
     private val beats = listOf("Hip-hop", "Afrobeat", "Pop", "Slow R&B")
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,7 +50,7 @@ class MainActivity : Activity() {
             }
 
         root.addView(label("BWAYO MUSIC STUDIO", 25f))
-        root.addView(label("Record your voice and mix it with an offline beat.", 15f, 0xFFD5D0E8.toInt()))
+        root.addView(label("Record your voice with a softer offline backing beat.", 15f, 0xFFD5D0E8.toInt()))
         root.addView(label("Choose a beat", 17f))
         beatChoice = Spinner(this)
         beatChoice.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, beats)
@@ -64,6 +66,17 @@ class MainActivity : Activity() {
             override fun onStopTrackingTouch(s: SeekBar?) {}
         })
         root.addView(tempo)
+        beatVolumeLabel = label("Beat volume: 15% (keep your voice clear)", 15f)
+        root.addView(beatVolumeLabel)
+        beatVolume = SeekBar(this).apply { max = 100; progress = 15 }
+        beatVolume.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(s: SeekBar?, p: Int, fromUser: Boolean) {
+                beatVolumeLabel.text = "Beat volume: ${p}% (your voice stays in front)"
+            }
+            override fun onStartTrackingTouch(s: SeekBar?) {}
+            override fun onStopTrackingTouch(s: SeekBar?) {}
+        })
+        root.addView(beatVolume)
         val start = Button(this).apply { text = "●  START RECORDING" }
         val stop = Button(this).apply { text = "■  STOP & SAVE"; isEnabled = false }
         root.addView(start)
@@ -125,8 +138,9 @@ class MainActivity : Activity() {
                         if (count <= 0) continue
                         for (i in 0 until count) {
                             val beat = beatSample(sampleIndex, bpm, style)
-                            val mic = input[i].toInt() * 0.82
-                            mixed[i] = (mic + beat * 0.42).toInt().coerceIn(-32768, 32767).toShort()
+                            val mic = input[i].toInt() * 0.95
+                            val beatGain = (beatVolume.progress / 100.0) * 0.25
+                            mixed[i] = (mic + beat * beatGain).toInt().coerceIn(-32768, 32767).toShort()
                             sampleIndex++
                         }
                         outputPlayer.write(mixed, 0, count)
