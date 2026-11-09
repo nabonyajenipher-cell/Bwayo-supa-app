@@ -373,6 +373,7 @@ class MainActivity : Activity() {
  }
  private fun showAbout(){
   val l=base();l.addView(heading("ABOUT BWAYO"))
+  l.addView(TextView(this).apply{text="OWNER & FOUNDER: BWAYO EMMANUEL";textSize=20f;typeface=Typeface.DEFAULT_BOLD;gravity=Gravity.CENTER;setTextColor(Color.rgb(13,71,161));setPadding(dp(8),dp(18),dp(8),dp(18))})
   l.addView(TextView(this).apply{
    text="Bwayo Super App is a community space where members can share posts and videos, like and comment, follow community activity through notifications, and connect by sharing the app.\\n\\nBuilt to bring the Bwayo community together."
    textSize=17f;setTextColor(Color.DKGRAY);setPadding(dp(12),dp(12),dp(12),dp(20))
