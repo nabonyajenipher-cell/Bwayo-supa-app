@@ -1,0 +1,66 @@
+name: Build Bwayo Miracle Thunder
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'Bwayo_Miracle_Thunder/**'
+      - '.github/workflows/bwayo-miracle-thunder.yml'
+    branches: [ main, master, add-bwayo-miracle-thunder ]
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Bwayo_Miracle_Thunder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate Android platform files
+        run: flutter create --platforms=android --project-name bwayo_miracle_thunder .
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Bwayo-Miracle-Thunder-Android-APK
+          path: Bwayo_Miracle_Thunder/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+
+  windows:
+    name: Build Windows app
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: Bwayo_Miracle_Thunder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate Windows platform files
+        run: flutter create --platforms=windows --project-name bwayo_miracle_thunder .
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter build windows --release
+      - name: Package Windows app
+        shell: pwsh
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath Bwayo-Miracle-Thunder-Windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Bwayo-Miracle-Thunder-Windows
+          path: Bwayo_Miracle_Thunder/Bwayo-Miracle-Thunder-Windows.zip
+          if-no-files-found: error
