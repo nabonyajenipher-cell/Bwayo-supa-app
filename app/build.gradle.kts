@@ -7,7 +7,7 @@ android {
     compileSdk = 35
     defaultConfig {
         applicationId = "com.bwayo.superapp"
-        minSdk = 24
+        minSdk = 23
         targetSdk = 35
         versionCode = 2
         versionName = "1.1"
@@ -38,7 +38,4 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
-}
-dependencies {
-    implementation("dev.ffmpegkit-maintained:ffmpeg-kit-full:8.1.7")
 }
