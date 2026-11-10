@@ -2,6 +2,8 @@ package com.bwayo.superapp
 import android.app.Activity
 import android.app.AlertDialog
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.content.Intent
 import android.net.Uri
 import android.net.ConnectivityManager
@@ -14,6 +16,7 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
+import android.view.View
 import android.widget.*
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -29,6 +32,9 @@ class MainActivity : Activity() {
  private val baseUrl="https://pxjiadrraofmnreffvxx.supabase.co"
  private val anonKey="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4amlhZHJyYW9mbW5yZWZmdnh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxNDc4MjcsImV4cCI6MjEwOTcyMzgyN30.wr1UqU5WAq3kp-sV0Hb0xWMgDzNq8ycwluCTe7ajInk"
  private val worker=Executors.newFixedThreadPool(4)
+ private val chatHandler=Handler(Looper.getMainLooper())
+ private var chatActive=false
+ private var chatSignature=""
  private var token:String?=null; private var userId:String?=null; private var userEmail:String?=null
  private var displayName="Member"; private var isAdmin=false; private lateinit var feed:LinearLayout; private var pickedVideo:Uri?=null; private var videoStatus:TextView?=null; private var pickedAvatar:Uri?=null; private var avatarUrl:String?=null
  override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState)
@@ -251,6 +257,7 @@ class MainActivity : Activity() {
   l.addView(TextView(this).apply{text="GET STARTED";textSize=12f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.GRAY);setPadding(dp(4),dp(5),dp(4),dp(8))})
   val primary=listOf<Pair<String,()->Unit>>(
    "Explore community" to {showExplore()},
+   "Live community chat" to {showCommunityChat()},
    "My profile" to {showProfile()},
    "My posts" to {showMyPosts()},
    "Notifications" to {showNotifications()},
@@ -263,7 +270,7 @@ class MainActivity : Activity() {
    for(col in 0..1){
     if(index<primary.size){
      val item=primary[index]
-     val symbol=when(item.first){"Explore community"->"🌍";"My profile"->"👤";"My posts"->"📝";"Play simulator"->"🎮";"Play Chess"->"♟️";else->"🔔"}
+     val symbol=when(item.first){"Explore community"->"🌍";"Live community chat"->"💬";"My profile"->"👤";"My posts"->"📝";"Play simulator"->"🎮";"Play Chess"->"♟️";else->"🔔"}
      val card=LinearLayout(this).apply{
       orientation=1;gravity=Gravity.CENTER;background=rounded(Color.WHITE,18)
       setPadding(dp(8),dp(13),dp(8),dp(13));elevation=dp(2).toFloat()
