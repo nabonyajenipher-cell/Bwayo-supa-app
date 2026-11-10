@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://nabonyajenipher-cell.github.io/Bwayo-supa-app/sitemap.xml
