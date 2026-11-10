@@ -116,10 +116,14 @@ class MainActivity : Activity() {
  }
  private fun btn(s:String,a:()->Unit)=Button(this).apply{
   text=s;textSize=14f;isAllCaps=false;typeface=Typeface.create("sans-serif-medium",Typeface.BOLD)
-  setTextColor(Color.WHITE);background=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(79,70,229),Color.rgb(37,99,235))).apply{cornerRadius=dp(16).toFloat()}
+  setTextColor(Color.WHITE)
+  val buttonShape=GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,intArrayOf(Color.rgb(79,70,229),Color.rgb(37,99,235))).apply{cornerRadius=dp(16).toFloat()}
+  background=android.graphics.drawable.RippleDrawable(android.content.res.ColorStateList.valueOf(Color.argb(55,255,255,255)),buttonShape,null)
+  stateListAnimator=null
   elevation=dp(3).toFloat();setPadding(dp(16),dp(10),dp(16),dp(10))
   val lp=LinearLayout.LayoutParams(-1,dp(54));lp.setMargins(0,dp(8),0,dp(8));layoutParams=lp
-  setOnClickListener{a()}
+  isHapticFeedbackEnabled=true
+  setOnClickListener{performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK);a()}
  }
  private fun msg(s:String){Toast.makeText(this,s,Toast.LENGTH_LONG).show()}
  private fun setScrollableContent(content:LinearLayout){
