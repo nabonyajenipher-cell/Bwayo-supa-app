@@ -26,10 +26,10 @@ class ThunderHome extends StatefulWidget {
 
 class _ThunderHomeState extends State<ThunderHome> {
   int selected = 0;
-  final pages = const [DashboardPage(), DevicePage(), DiagnosticsPage(), BackupPage(), AdbGuidePage()];
+  final pages = const [DashboardPage(), DevicePage(), DiagnosticsPage(), FirmwarePage(), BackupPage(), AdbGuidePage()];
   @override
   Widget build(BuildContext context) {
-    const titles = ['Dashboard', 'Device information', 'Diagnostics', 'Backup & restore', 'ADB guide'];
+    const titles = ['Dashboard', 'Device information', 'Diagnostics', 'Firmware servicing', 'Backup & restore', 'ADB guide'];
     return Scaffold(
       appBar: AppBar(
         title: const Text('BWAYO MIRACLE THUNDER', style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: .5)),
@@ -44,6 +44,7 @@ class _ThunderHomeState extends State<ThunderHome> {
             NavigationRailDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: Text('Home')),
             NavigationRailDestination(icon: Icon(Icons.phone_android), label: Text('Device')),
             NavigationRailDestination(icon: Icon(Icons.health_and_safety_outlined), label: Text('Check')),
+            NavigationRailDestination(icon: Icon(Icons.system_update_alt), label: Text('Firmware')),
             NavigationRailDestination(icon: Icon(Icons.backup_outlined), label: Text('Backup')),
             NavigationRailDestination(icon: Icon(Icons.terminal), label: Text('ADB guide')),
           ],
@@ -54,7 +55,7 @@ class _ThunderHomeState extends State<ThunderHome> {
           const SizedBox(height: 16),
           Expanded(child: pages[selected]),
           const Divider(),
-          const Row(children: [Icon(Icons.verified_user_outlined, size: 16, color: Colors.tealAccent), SizedBox(width: 8), Expanded(child: Text('Owner & Founder: BWAYO EMMANUEL', style: TextStyle(color: Colors.white70))), Text('Build 1.0.0', style: TextStyle(color: Colors.white38))]),
+          const Row(children: [Icon(Icons.verified_user_outlined, size: 16, color: Colors.tealAccent), SizedBox(width: 8), Expanded(child: Text('Owner & Founder: BWAYO EMMANUEL', style: TextStyle(color: Colors.white70))), Text('Build 1.1.0', style: TextStyle(color: Colors.white38))]),
         ]))),
       ]),
     );
@@ -69,9 +70,9 @@ class DashboardPage extends StatelessWidget {
     const SizedBox(height: 18),
     Wrap(spacing: 14, runSpacing: 14, children: const [
       InfoCard(icon: Icons.usb, title: 'USB connection', value: 'Waiting for device', detail: 'Connect an authorized Android phone'),
-      InfoCard(icon: Icons.memory, title: 'Device details', value: 'Not available', detail: 'Device integration is not yet implemented'),
+      InfoCard(icon: Icons.phone_android, title: 'Device details', value: 'Not available', detail: 'Device integration is not yet implemented'),
       InfoCard(icon: Icons.monitor_heart_outlined, title: 'Diagnostics', value: 'Ready', detail: 'Run the manual checks below'),
-      InfoCard(icon: Icons.backup, title: 'Backup status', value: 'Not started', detail: 'Back up personal data before servicing'),
+      InfoCard(icon: Icons.system_update_alt, title: 'Firmware', value: 'Preparation ready', detail: 'Official firmware workflow guidance'),
     ]),
     const SizedBox(height: 22),
     const SectionCard(title: 'Quick start', child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -111,6 +112,83 @@ class DiagnosticsPage extends StatelessWidget {
   ]);
 }
 
+class FirmwarePage extends StatefulWidget {
+  const FirmwarePage({super.key});
+  @override
+  State<FirmwarePage> createState() => _FirmwarePageState();
+}
+
+class _FirmwarePageState extends State<FirmwarePage> {
+  String brand = 'Samsung';
+  final Map<String, bool> checks = {
+    'I own this device or have clear permission to service it': false,
+    'I confirmed the exact model and regional variant': false,
+    'I downloaded firmware from the manufacturer or an authorized source': false,
+    'My important data is backed up': false,
+    'The battery is charged to at least 60%': false,
+    'I understand that incorrect firmware can erase data or damage the device': false,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final ready = checks.values.every((v) => v);
+    return ListView(children: [
+      Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Row(children: [Icon(Icons.system_update_alt, color: Colors.tealAccent, size: 28), SizedBox(width: 10), Expanded(child: Text('Firmware servicing', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)))]),
+        const SizedBox(height: 10),
+        const Text('Prepare an authorized firmware update using the phone maker’s official process. This screen is a preparation checklist; direct USB flashing is not yet implemented.'),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<String>(
+          value: brand,
+          decoration: const InputDecoration(labelText: 'Device manufacturer', border: OutlineInputBorder()),
+          items: const ['Samsung', 'Google Pixel', 'Motorola', 'Xiaomi', 'Other'].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
+          onChanged: (v) => setState(() => brand = v ?? brand),
+        ),
+        const SizedBox(height: 16),
+        const Text('Before proceeding', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+        const SizedBox(height: 8),
+        ...checks.keys.map((label) => CheckboxListTile(
+          value: checks[label],
+          onChanged: (v) => setState(() => checks[label] = v ?? false),
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          controlAffinity: ListTileControlAffinity.leading,
+          title: Text(label),
+        )),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(color: Colors.orange.withValues(alpha: .12), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.orangeAccent)),
+          child: const Text('IMPORTANT: Never flash a package for a different model or region. Do not disconnect the cable during an official update. Firmware operations can erase all user data.', style: TextStyle(color: Colors.orangeAccent)),
+        ),
+        const SizedBox(height: 14),
+        FilledButton.icon(
+          onPressed: ready ? () => showDialog<void>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Preparation checklist complete'),
+              content: Text('You selected $brand. Use the manufacturer’s official updater and follow its model-specific instructions. BWAYO MIRACLE THUNDER does not send firmware to the phone yet.'),
+              actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+            ),
+          ) : null,
+          icon: const Icon(Icons.verified_outlined),
+          label: const Text('Confirm preparation checklist'),
+        ),
+        const SizedBox(height: 8),
+        Text(ready ? 'Checklist complete — official updater still required.' : 'Complete all six checks to confirm preparation.', style: const TextStyle(color: Colors.white70)),
+      ]))),
+      const SectionCard(title: 'Supported approach', child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Bullet('Use the manufacturer’s official recovery or firmware utility for the exact device model.'),
+        Bullet('Verify firmware model, region, source and integrity before use.'),
+        Bullet('Keep the phone powered and connected throughout the official process.'),
+        Bullet('If the phone is managed by an organization, obtain its authorization first.'),
+      ])),
+      const SectionCard(title: 'Not provided by this app', child: Text('No FRP or screen-lock bypass, account bypass, IMEI modification, bootloader security circumvention, or forced/unsupported flashing. Live flashing needs a tested, model-specific integration and official firmware source.')),
+    ]);
+  }
+}
+
 class BackupPage extends StatelessWidget {
   const BackupPage({super.key});
   @override
@@ -139,7 +217,7 @@ class AdbGuidePage extends StatelessWidget {
       CodeLine('adb devices'), CodeLine('adb shell getprop ro.product.model'),
       CodeLine('adb shell getprop ro.build.version.release'),
     ])),
-    SectionCard(title: 'Not included', child: Text('No security-lock or FRP bypass, IMEI modification, account removal, or unsupported firmware flashing. Vendor-specific operations need official packages and validated procedures.')),
+    SectionCard(title: 'Not included', child: Text('No security-lock or FRP bypass, IMEI modification, account removal, or unauthorized firmware flashing. Vendor-specific operations need official packages and validated procedures.')),
   ]);
 }
 
