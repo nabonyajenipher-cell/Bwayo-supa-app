@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#101827"><title>Bwayo Classic Ludo</title>
 <style>
-*{box-sizing:border-box}body{margin:0;padding:12px;background:linear-gradient(145deg,#101827,#263b5b);color:#fff;font:600 14px system-ui;text-align:center}h1{margin:4px;color:#ffe08a;font-size:27px}.sub{color:#cbd5e1;font-size:11px;margin-bottom:10px}.panel{max-width:560px;margin:10px auto;padding:11px;border-radius:14px;background:#ffffff14;border:1px solid #ffffff25}.turn{font-size:18px;font-weight:900}.boardwrap{max-width:560px;margin:auto;padding:5px;background:#fff;border:4px solid #e8c66e;border-radius:14px;box-shadow:0 12px 30px #0007}.board{display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr);aspect-ratio:1;background:#fff;border:1px solid #334155}.cell{position:relative;border:1px solid #cbd5e1;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center}.base{grid-column:span 6;grid-row:span 6;margin:2px;border:3px solid #263445;border-radius:8px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px;padding:10px}.yard{background:#fff;border:2px solid #263445;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#111;font-size:12px}.track{background:#f8fafc}.safe{background:#fef3c7!important}.lane{background:#ddd}.center{grid-column:7/10;grid-row:7/10;background:conic-gradient(#e53935 0 25%,#21a453 0 50%,#f5c542 0 75%,#2878e5 0);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);border:0}.token{width:78%;height:78%;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px #0009;color:white;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;z-index:2;padding:0}.token.legal{outline:3px solid #111;animation:pulse .8s infinite alternate}.token.baseToken{width:65%;height:65%}.red{background:#e53935}.green{background:#159447}.yellow{background:#e6b800;color:#241900}.blue{background:#2878e5}.controls{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin:12px auto}.btn{border:0;border-radius:12px;padding:13px 17px;font-weight:900;font-size:14px;background:#ffdc78;color:#202536;box-shadow:0 4px 0 #b48731}.btn:disabled{opacity:.4}.btn.alt{background:#dbeafe}.status{min-height:45px;color:#fff2c8}.dice{font-size:30px}.rules{text-align:left;color:#dbeafe;font-size:12px;line-height:1.55}.rules b{color:#ffe08a}@keyframes pulse{to{outline-color:#ffe08a;transform:scale(1.08)}}
+*{box-sizing:border-box}body{margin:0;padding:12px;background:linear-gradient(145deg,#101827,#263b5b);color:#fff;font:600 14px system-ui;text-align:center}h1{margin:4px;color:#ffe08a;font-size:27px}.sub{color:#cbd5e1;font-size:11px;margin-bottom:10px}.panel{max-width:560px;margin:10px auto;padding:11px;border-radius:14px;background:#ffffff14;border:1px solid #ffffff25}.turn{font-size:18px;font-weight:900}.boardwrap{max-width:560px;margin:auto;padding:5px;background:#fff;border:4px solid #e8c66e;border-radius:14px;box-shadow:0 12px 30px #0007}.board{display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr);aspect-ratio:1;background:#fff;border:1px solid #334155}.cell{position:relative;border:1px solid #aeb8c5;background:#f8fafc;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center}.base{grid-column:span 6;grid-row:span 6;margin:2px;border:3px solid #263445;border-radius:8px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px;padding:10px;z-index:3}.base.red{background:#e53935}.base.green{background:#159447}.base.yellow{background:#f2c230}.base.blue{background:#2878e5}.yard{background:#fff;border:2px solid #263445;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#111;font-size:12px}.track{background:#fff;border:1px solid #475569}.safe{background:#ffe08a!important}.lane{background:#ddd;border:1px solid #475569}.lane.red{background:#ef7777}.lane.green{background:#75d69a}.lane.yellow{background:#ffe17b}.lane.blue{background:#79b6ff}.center{grid-column:7/10;grid-row:7/10;background:conic-gradient(#159447 0 25%,#f2c230 0 50%,#2878e5 0 75%,#e53935 0);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);border:0;z-index:2}.token{width:78%;height:78%;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px #0009;color:white;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;z-index:2;padding:0}.token.legal{outline:3px solid #111;animation:pulse .8s infinite alternate}.token.baseToken{width:65%;height:65%}.red{background:#e53935}.green{background:#159447}.yellow{background:#e6b800;color:#241900}.blue{background:#2878e5}.controls{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin:12px auto}.btn{border:0;border-radius:12px;padding:13px 17px;font-weight:900;font-size:14px;background:#ffdc78;color:#202536;box-shadow:0 4px 0 #b48731}.btn:disabled{opacity:.4}.btn.alt{background:#dbeafe}.status{min-height:45px;color:#fff2c8}.dice{font-size:30px}.rules{text-align:left;color:#dbeafe;font-size:12px;line-height:1.55}.rules b{color:#ffe08a}@keyframes pulse{to{outline-color:#ffe08a;transform:scale(1.08)}}
 </style></head><body>
 <h1>🎲 BWAYO CLASSIC LUDO</h1><div class="sub">THE FAMILIAR FOUR-COLOUR LUDO • OFFLINE • PASS THE PHONE</div>
 <div class="panel"><div class="turn" id="turn">RED PLAYER'S TURN</div><div class="dice" id="dice">🎲</div><div class="status" id="status">Roll the dice. You need a 6 to bring a counter out of your yard.</div></div>
@@ -13,10 +13,19 @@ const board=document.getElementById('board');
 const colors=['red','green','yellow','blue'],names=['RED','GREEN','YELLOW','BLUE'],starts=[0,13,26,39];
 const safe=[0,8,13,21,26,34,39,47];
 const track=[];
-for(let x=1;x<=13;x++)track.push([6,x]);
-for(let y=1;y<=13;y++)track.push([y,8]);
-for(let x=13;x>=1;x--)track.push([8,x]);
-for(let y=13;y>=1;y--)track.push([y,6]);
+// The 52 distinct squares of the familiar clockwise Ludo track.
+for(let x=1;x<=5;x++)track.push([6,x]);
+for(let y=5;y>=0;y--)track.push([y,6]);
+track.push([0,7]);
+for(let y=0;y<=5;y++)track.push([y,8]);
+for(let x=9;x<=14;x++)track.push([6,x]);
+track.push([7,14]);
+for(let x=14;x>=9;x--)track.push([8,x]);
+for(let y=9;y<=14;y++)track.push([y,8]);
+track.push([14,7]);
+for(let y=14;y>=9;y--)track.push([y,6]);
+for(let x=5;x>=0;x--)track.push([8,x]);
+track.push([7,0],[6,0]);
 const homes=[[[7,1],[7,2],[7,3],[7,4],[7,5]],[[1,7],[2,7],[3,7],[4,7],[5,7]],[[7,13],[7,12],[7,11],[7,10],[7,9]],[[13,7],[12,7],[11,7],[10,7],[9,7]]];
 const yards=[[[2,2],[2,4],[4,2],[4,4]],[[2,10],[2,12],[4,10],[4,12]],[[10,10],[10,12],[12,10],[12,12]],[[10,2],[10,4],[12,2],[12,4]]];
 const key=(r,c)=>r+','+c;
@@ -30,7 +39,7 @@ function makeBoard(){
   let el=document.createElement('div');el.className='cell';el.style.gridRow=r+1;el.style.gridColumn=c+1;board.appendChild(el);cells[key(r,c)]=el;
  }
  bases.forEach(b=>{let el=document.createElement('div');el.className='base '+colors[b.p];el.style.gridRow=(b.r+1)+'/span 6';el.style.gridColumn=(b.c+1)+'/span 6';el.innerHTML='<div class="yard"></div><div class="yard"></div><div class="yard"></div><div class="yard"></div>';board.appendChild(el);});
- track.forEach(([r,c],i)=>{let el=cells[key(r,c)];el.classList.add('track');if(safe.includes(i))el.classList.add('safe');if(i===0||i===13||i===26||i===39)el.style.border='2px solid #111';});
+ track.forEach(([r,c],i)=>{let el=cells[key(r,c)];if(!el)return;el.classList.add('track');if(safe.includes(i))el.classList.add('safe');if(i===0||i===13||i===26||i===39){el.style.border='3px solid #172033';el.style.background=colors[i/13];}});
  homes.forEach((lane,p)=>lane.forEach(([r,c])=>{cells[key(r,c)].classList.add('lane',colors[p]);}));
  let center=document.createElement('div');center.className='cell center';board.appendChild(center);
  drawTokens();
