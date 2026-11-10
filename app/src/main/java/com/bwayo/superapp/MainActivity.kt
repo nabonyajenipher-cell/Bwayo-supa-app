@@ -45,19 +45,49 @@ class MainActivity : Activity() {
  private fun offlinePosts():JSONArray=try{JSONArray(offlinePrefs().getString("posts","[]"))}catch(_:Exception){JSONArray()}
  private fun showOfflineHome(){
   val l=base()
-  l.addView(heading("BWAYO SUPER APP"))
-  l.addView(TextView(this).apply{text="OFFLINE MODE • No account or internet required";textSize=13f;gravity=Gravity.CENTER;setTextColor(Color.rgb(0,105,75));setPadding(8,14,8,14)})
-  l.addView(TextView(this).apply{text="Welcome, $displayName 👋";textSize=23f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(30,41,90));setPadding(4,12,4,4)})
-  l.addView(TextView(this).apply{text="Your apps and saved content stay on this phone.";textSize=14f;setTextColor(Color.DKGRAY);setPadding(4,0,4,12)})
-  l.addView(btn("🌐 SWITCH TO ONLINE MODE"){if(!hasInternet()){msg("No internet connection. Connect to Wi-Fi or mobile data, then try again.");return@btn};if(token!=null&&userId!=null)loadHome() else showAuth()})
-  l.addView(btn("🎮 PLAY BWAYO SUPER GAME"){showSimulator()})
-  l.addView(btn("♟️ PLAY OFFLINE CHESS"){showChess()})
-  l.addView(btn("📝 CREATE A LOCAL POST"){createOfflinePost()})
-  l.addView(btn("🌍 MY LOCAL COMMUNITY"){showOfflineFeed()})
-  l.addView(btn("👤 MY PROFILE"){showOfflineProfile()})
-  l.addView(btn("⚙️ SETTINGS & STORAGE"){showOfflineSettings()})
-  l.addView(btn("ℹ️ APP FEATURES"){showInfoPage("BWAYO SUPER APP • OFFLINE","Works without mobile data or Wi-Fi.",listOf("City life simulator" to "Play, work, earn money, buy homes and vehicles. Your game progress is saved on this phone.","Local community posts" to "Create and read text posts stored privately on this phone.","Local profile" to "Choose a display name saved on this phone.","Offline chess" to "Play standard two-player chess without internet. Your game runs on this phone.", "Offline storage" to "Your posts and game progress remain available without internet."))})
-  l.addView(TextView(this).apply{text="BWAYO EMMANUEL • OWNER & FOUNDER";textSize=11f;gravity=Gravity.CENTER;setTextColor(Color.GRAY);setPadding(4,18,4,8)})
+  val hero=LinearLayout(this).apply{
+   orientation=1
+   background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(15,45,112),Color.rgb(37,99,235),Color.rgb(91,76,210))).apply{cornerRadius=dp(24).toFloat()}
+   setPadding(dp(20),dp(20),dp(20),dp(20));elevation=dp(4).toFloat()
+  }
+  hero.addView(TextView(this).apply{text="BWAYO  ✦  SUPER APP";textSize=21f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.WHITE)})
+  hero.addView(TextView(this).apply{text="Your community. Your games. Your space.";textSize=15f;setTextColor(Color.rgb(226,235,255));setPadding(0,dp(8),0,dp(14))})
+  hero.addView(TextView(this).apply{text="WELCOME BACK, $displayName 👋";textSize=13f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.WHITE);background=rounded(Color.argb(45,255,255,255),12);setPadding(dp(11),dp(9),dp(11),dp(9))})
+  l.addView(hero)
+  l.addView(TextView(this).apply{text="OFFLINE MODE  •  Your saved content is on this phone";textSize=12f;typeface=Typeface.DEFAULT_BOLD;gravity=Gravity.CENTER;setTextColor(Color.rgb(0,105,75));background=rounded(Color.rgb(220,252,231),12);setPadding(dp(10),dp(12),dp(10),dp(12))}.also{val p=LinearLayout.LayoutParams(-1,-2);p.setMargins(0,dp(12),0,dp(8));it.layoutParams=p})
+  l.addView(btn("🌐  SWITCH TO ONLINE MODE"){if(!hasInternet()){msg("No internet connection. Connect to Wi-Fi or mobile data, then try again.");return@btn};if(token!=null&&userId!=null)loadHome() else showAuth()})
+  l.addView(TextView(this).apply{text="QUICK ACCESS";textSize=12f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(100,116,139));setPadding(dp(4),dp(16),dp(4),dp(7))})
+  fun shortcut(icon:String,title:String,detail:String,action:()->Unit):LinearLayout{
+   return LinearLayout(this).apply{
+    orientation=1;gravity=Gravity.CENTER;background=rounded(Color.WHITE,18)
+    setPadding(dp(8),dp(14),dp(8),dp(14));elevation=dp(2).toFloat()
+    addView(TextView(this@MainActivity).apply{text=icon;textSize=27f;gravity=Gravity.CENTER})
+    addView(TextView(this@MainActivity).apply{text=title;textSize=13f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(30,58,138));gravity=Gravity.CENTER;setPadding(0,dp(6),0,dp(2))})
+    addView(TextView(this@MainActivity).apply{text=detail;textSize=10f;setTextColor(Color.rgb(100,116,139));gravity=Gravity.CENTER})
+    setOnClickListener{performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK);action()}
+   }
+  }
+  val shortcuts=listOf(
+   Triple("🎮","City simulator","Play and earn",::showSimulator),
+   Triple("♟️","Offline chess","Play a match",::showChess),
+   Triple("📝","Create a post","Save it locally",::createOfflinePost),
+   Triple("🌍","My community","Your saved posts",::showOfflineFeed),
+   Triple("👤","My profile","Edit your name",::showOfflineProfile),
+   Triple("⚙️","Settings","Manage local data",::showOfflineSettings)
+  )
+  var index=0
+  while(index<shortcuts.size){
+   val row=LinearLayout(this).apply{orientation=0}
+   for(col in 0..1){
+    if(index<shortcuts.size){
+     val item=shortcuts[index]
+     row.addView(shortcut(item.first,item.second,item.third,item.fourth),LinearLayout.LayoutParams(0,dp(116),1f).apply{setMargins(dp(4),dp(4),dp(4),dp(4))})
+     index++
+    }else row.addView(Space(this),LinearLayout.LayoutParams(0,dp(116),1f))
+   }
+   l.addView(row)
+  }
+  l.addView(TextView(this).apply{text="BWAYO EMMANUEL  •  OWNER & FOUNDER";textSize=11f;typeface=Typeface.DEFAULT_BOLD;gravity=Gravity.CENTER;setTextColor(Color.rgb(100,116,139));setPadding(dp(4),dp(22),dp(4),dp(8))})
   setScrollableContent(l)
  }
  private fun createOfflinePost(){
