@@ -478,6 +478,62 @@ class MainActivity : Activity() {
   page.addView(game,LinearLayout.LayoutParams(-1,0,1f))
   setContentView(page)
  }
+ private fun stopCommunityChat(){chatActive=false;chatHandler.removeCallbacksAndMessages(null)}
+ private fun showCommunityChat(){
+  if(token==null||userId==null){showAuth();return}
+  stopCommunityChat();chatActive=true;chatSignature=""
+  val page=base();page.addView(heading("💬 LIVE COMMUNITY CHAT"))
+  page.addView(TextView(this).apply{text="Chat with Bwayo members. Be respectful and never share passwords or private information.";textSize=13f;setTextColor(Color.rgb(71,85,105));setPadding(dp(6),dp(10),dp(6),dp(10))})
+  val messages=LinearLayout(this).apply{orientation=1}
+  val scroll=ScrollView(this).apply{isFillViewport=true;addView(messages)}
+  page.addView(scroll,LinearLayout.LayoutParams(-1,0,1f))
+  val composer=LinearLayout(this).apply{orientation=0;gravity=Gravity.CENTER_VERTICAL}
+  val input=EditText(this).apply{hint="Write a message...";maxLines=3;minLines=1;background=rounded(Color.WHITE,14);setPadding(dp(12),dp(8),dp(12),dp(8))}
+  composer.addView(input,LinearLayout.LayoutParams(0,-2,1f))
+  lateinit var send:Button
+  send=btn("SEND"){
+   val content=input.text.toString().trim()
+   if(content.isBlank()){msg("Write a message first.");return@btn}
+   if(content.length>1000){msg("Messages must be 1,000 characters or fewer.");return@btn}
+   send.isEnabled=false;send.text="Sending..."
+   async{try{
+    req("/rest/v1/chat_messages","POST",JSONObject().put("user_id",userId).put("content",content),prefer="return=minimal")
+    runOnUiThread{input.text.clear();send.isEnabled=true;send.text="SEND";loadCommunityMessages(messages,scroll)}
+   }catch(x:Exception){runOnUiThread{send.isEnabled=true;send.text="SEND";msg("Message not sent: "+(x.message?:"Please try again."))}}}
+  }
+  composer.addView(send,LinearLayout.LayoutParams(dp(104),-2).apply{leftMargin=dp(6)})
+  page.addView(composer);page.addView(btn("← BACK TO HOME"){stopCommunityChat();loadHome()})
+  setContentView(page);loadCommunityMessages(messages,scroll)
+  val poll=object:Runnable{override fun run(){if(!chatActive)return;loadCommunityMessages(messages,scroll);chatHandler.postDelayed(this,2500)}}
+  chatHandler.postDelayed(poll,2500)
+ }
+ private fun loadCommunityMessages(container:LinearLayout,scroll:ScrollView){
+  if(!chatActive)return
+  async{try{
+   val rows=JSONArray(req("/rest/v1/chat_messages?select=id,user_id,content,created_at,profiles(name)&order=created_at.asc&limit=60"))
+   val signature=rows.toString()
+   if(signature==chatSignature)return@async
+   chatSignature=signature
+   runOnUiThread{
+    if(!chatActive)return@runOnUiThread
+    container.removeAllViews()
+    if(rows.length()==0)container.addView(TextView(this).apply{text="No messages yet. Say hello to the Bwayo community!";textSize=15f;setTextColor(Color.GRAY);setPadding(dp(12),dp(20),dp(12),dp(20))})
+    for(i in 0 until rows.length()){
+     val row=rows.getJSONObject(i);val mine=row.optString("user_id")==userId
+     val author=row.optJSONObject("profiles")?.optString("name")?.takeIf{it.isNotBlank()}?:"Bwayo member"
+     val bubble=LinearLayout(this).apply{orientation=1;background=rounded(if(mine)Color.rgb(219,234,254) else Color.WHITE,16);setPadding(dp(12),dp(9),dp(12),dp(9))}
+     bubble.addView(TextView(this).apply{text=if(mine)"You" else author;textSize=12f;typeface=Typeface.DEFAULT_BOLD;setTextColor(if(mine)Color.rgb(29,78,216) else Color.rgb(67,56,202))})
+     bubble.addView(TextView(this).apply{text=row.optString("content");textSize=16f;setTextColor(Color.rgb(30,41,59));setPadding(0,dp(4),0,dp(3))})
+     bubble.addView(TextView(this).apply{text=row.optString("created_at").replace("T"," ").take(16);textSize=10f;setTextColor(Color.GRAY)})
+     val line=LinearLayout(this).apply{orientation=0;gravity=if(mine)Gravity.END else Gravity.START}
+     line.addView(bubble,LinearLayout.LayoutParams(dp(280),-2).apply{setMargins(dp(3),dp(4),dp(3),dp(4))})
+     container.addView(line)
+    }
+    scroll.post{scroll.fullScroll(View.FOCUS_DOWN)}
+   }
+  }catch(x:Exception){runOnUiThread{if(chatActive)msg("Chat could not refresh. Check your internet connection.")}}}
+ }
+
  private fun showExplore(){
   val l=base();l.addView(heading("EXPLORE COMMUNITY"))
   l.addView(TextView(this).apply{text="Discover the latest videos and posts shared by the Bwayo community.";textSize=15f;setTextColor(Color.DKGRAY);setPadding(8,8,8,14)})
