@@ -1,58 +1,85 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#111827"><title>Bwayo Offline Ludo</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#101827"><title>Bwayo Classic Ludo</title>
 <style>
-*{box-sizing:border-box}body{margin:0;padding:14px;background:linear-gradient(145deg,#111827,#25345b);color:#fff;font:600 14px system-ui;text-align:center}h1{margin:5px 0;color:#ffe08a;font-size:27px}.sub{color:#cbd5e1;font-size:12px;margin-bottom:12px}.boardwrap{max-width:560px;margin:auto;background:#fff;border:5px solid #f8d477;border-radius:18px;padding:5px;box-shadow:0 12px 30px #0007}canvas{width:100%;height:auto;display:block;touch-action:manipulation}.status{max-width:560px;margin:12px auto;padding:12px;background:#ffffff16;border:1px solid #ffffff25;border-radius:13px;min-height:48px;color:#fff2c8}.controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:12px auto;max-width:560px}.btn{border:0;border-radius:12px;padding:13px 19px;font-weight:900;font-size:15px;background:#ffdc78;color:#202536;box-shadow:0 4px 0 #b48731}.btn:disabled{opacity:.45}.btn.alt{background:#dbeafe}.btn.red{background:#fca5a5}.meta{max-width:560px;margin:10px auto;color:#cbd5e1;font-size:12px}.turn{font-size:18px;color:#fff;font-weight:900;margin:10px}.rules{max-width:560px;margin:12px auto;text-align:left;background:#ffffff12;padding:12px;border-radius:12px;color:#dbeafe;font-size:12px;line-height:1.55}.rules b{color:#ffe08a}
+*{box-sizing:border-box}body{margin:0;padding:12px;background:linear-gradient(145deg,#101827,#263b5b);color:#fff;font:600 14px system-ui;text-align:center}h1{margin:4px;color:#ffe08a;font-size:27px}.sub{color:#cbd5e1;font-size:11px;margin-bottom:10px}.panel{max-width:560px;margin:10px auto;padding:11px;border-radius:14px;background:#ffffff14;border:1px solid #ffffff25}.turn{font-size:18px;font-weight:900}.boardwrap{max-width:560px;margin:auto;padding:5px;background:#fff;border:4px solid #e8c66e;border-radius:14px;box-shadow:0 12px 30px #0007}.board{display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr);aspect-ratio:1;background:#fff;border:1px solid #334155}.cell{position:relative;border:1px solid #cbd5e1;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center}.base{grid-column:span 6;grid-row:span 6;margin:2px;border:3px solid #263445;border-radius:8px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px;padding:10px}.yard{background:#fff;border:2px solid #263445;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#111;font-size:12px}.track{background:#f8fafc}.safe{background:#fef3c7!important}.lane{background:#ddd}.center{grid-column:7/10;grid-row:7/10;background:conic-gradient(#e53935 0 25%,#21a453 0 50%,#f5c542 0 75%,#2878e5 0);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);border:0}.token{width:78%;height:78%;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px #0009;color:white;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;z-index:2;padding:0}.token.legal{outline:3px solid #111;animation:pulse .8s infinite alternate}.token.baseToken{width:65%;height:65%}.red{background:#e53935}.green{background:#159447}.yellow{background:#e6b800;color:#241900}.blue{background:#2878e5}.controls{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin:12px auto}.btn{border:0;border-radius:12px;padding:13px 17px;font-weight:900;font-size:14px;background:#ffdc78;color:#202536;box-shadow:0 4px 0 #b48731}.btn:disabled{opacity:.4}.btn.alt{background:#dbeafe}.status{min-height:45px;color:#fff2c8}.dice{font-size:30px}.rules{text-align:left;color:#dbeafe;font-size:12px;line-height:1.55}.rules b{color:#ffe08a}@keyframes pulse{to{outline-color:#ffe08a;transform:scale(1.08)}}
 </style></head><body>
-<h1>🎲 BWAYO LUDO</h1><div class="sub">OFFLINE LOCAL MULTIPLAYER • 2–4 PLAYERS • SAVES ON THIS PHONE</div>
-<div class="turn" id="turn">RED PLAYER'S TURN</div>
-<div class="boardwrap"><canvas id="board" width="600" height="600" aria-label="Ludo game board"></canvas></div>
-<div class="status" id="status">Tap ROLL DICE to begin. Get a six to bring a token out.</div>
-<div class="controls"><button class="btn" id="roll" onclick="rollDice()">🎲 ROLL DICE</button><button class="btn alt" onclick="newGame()">NEW GAME</button><button class="btn alt" onclick="togglePlayers()">PLAYERS: <span id="players">4</span></button></div>
-<div class="meta">Dice: <b id="dice">—</b> · Tap one of your highlighted tokens after rolling.</div>
-<div class="rules"><b>HOW TO PLAY</b><br>• Get a 6 to move a token out of base.<br>• Move around the board and enter your coloured home lane.<br>• You must roll the exact number to finish a token.<br>• Land on an opponent to send them back to base. Safe squares protect tokens.<br>• First player to finish all 4 tokens wins. Pass the phone between players.</div>
-<div class="controls"><button class="btn red" onclick="clearSaved()">RESET SAVED GAME</button></div>
+<h1>🎲 BWAYO CLASSIC LUDO</h1><div class="sub">THE FAMILIAR FOUR-COLOUR LUDO • OFFLINE • PASS THE PHONE</div>
+<div class="panel"><div class="turn" id="turn">RED PLAYER'S TURN</div><div class="dice" id="dice">🎲</div><div class="status" id="status">Roll the dice. You need a 6 to bring a counter out of your yard.</div></div>
+<div class="boardwrap"><div class="board" id="board"></div></div>
+<div class="controls"><button class="btn" id="roll" onclick="rollDice()">🎲 ROLL DICE</button><button class="btn alt" onclick="newGame()">NEW GAME</button><button class="btn alt" onclick="changePlayers()">PLAYERS: <span id="players">4</span></button></div>
+<div class="panel rules"><b>CLASSIC LUDO RULES</b><br>• Each player has four counters. Roll a 6 to enter a counter from the yard.<br>• Move clockwise around the 52-square track, then up your own coloured home column.<br>• You must roll the exact number to reach the centre finish.<br>• Landing on an opponent on an ordinary square captures it and sends it back to its yard.<br>• Star squares are safe: counters there cannot be captured. Your own two counters on one square make a blockade that opponents cannot land on or pass.<br>• Rolling a 6 gives another roll. Three sixes in a row cancel the turn (common classic rule). First player to bring all four counters home wins.</div>
 <script>
-const canvas=document.getElementById('board'),ctx=canvas.getContext('2d');
-const colors=['#e53935','#21a453','#f5c542','#2878e5'];
-const names=['RED','GREEN','YELLOW','BLUE'];
-const starts=[0,13,26,39],activeColors=[0,1,2,3];
-let playerCount=4,turn=0,dice=0,rolled=false,finished=false;
-let tokens=Array.from({length:4},()=>Array(4).fill(-1));
+const board=document.getElementById('board');
+const colors=['red','green','yellow','blue'],names=['RED','GREEN','YELLOW','BLUE'],starts=[0,13,26,39];
 const safe=[0,8,13,21,26,34,39,47];
-const ring=[];
-for(let i=0;i<52;i++){let a=-Math.PI/2+i*2*Math.PI/52;ring.push({x:300+222*Math.cos(a),y:300+222*Math.sin(a)});}
-function lanePoint(p,n){let a=(-Math.PI/2+starts[p]*2*Math.PI/52);let end={x:300+75*Math.cos(a),y:300+75*Math.sin(a)};let start=ring[starts[p]];let t=(n+1)/6;return{x:start.x+(end.x-start.x)*t,y:start.y+(end.y-start.y)*t};}
-function basePoint(p,i){let a=[Math.PI*1.25,Math.PI*1.75,Math.PI*.25,Math.PI*.75][p]+(i%2)*.35;let cx=[105,105,495,495][p],cy=[105,495,105,495][p];return{x:cx+Math.cos(a)*32,y:cy+Math.sin(a)*32};}
-function tokenPoint(p,i){let v=tokens[p][i];if(v<0)return basePoint(p,i);if(v<52)return ring[(starts[p]+v)%52];return lanePoint(p,v-52);}
-function draw(){
- ctx.clearRect(0,0,600,600);ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,600,600);
- const zones=[{x:18,y:18,c:colors[0]},{x:382,y:18,c:colors[1]},{x:18,y:382,c:colors[2]},{x:382,y:382,c:colors[3]}];
- zones.forEach(z=>{ctx.fillStyle=z.c;ctx.globalAlpha=.18;ctx.fillRect(z.x,z.y,200,200);ctx.globalAlpha=1;ctx.fillStyle=z.c;ctx.fillRect(z.x+28,z.y+28,144,144);ctx.fillStyle='#fff';ctx.fillRect(z.x+48,z.y+48,104,104);});
- // outer track
- ring.forEach((pt,i)=>{ctx.beginPath();ctx.arc(pt.x,pt.y,12,0,Math.PI*2);ctx.fillStyle=safe.includes(i)?'#facc15':'#e5e7eb';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#64748b';ctx.stroke();});
- // home lanes
- for(let p=0;p<4;p++){for(let n=0;n<6;n++){let q=lanePoint(p,n);ctx.beginPath();ctx.arc(q.x,q.y,12,0,Math.PI*2);ctx.fillStyle=colors[p];ctx.globalAlpha=.42;ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle='#334155';ctx.stroke();}}
- // center
- ctx.beginPath();ctx.arc(300,300,48,0,Math.PI*2);ctx.fillStyle='#1f2937';ctx.fill();ctx.strokeStyle='#facc15';ctx.lineWidth=5;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 16px system-ui';ctx.textAlign='center';ctx.fillText('HOME',300,306);
- // token pieces
- for(let p=0;p<playerCount;p++)for(let i=0;i<4;i++){let q=tokenPoint(p,i);ctx.beginPath();ctx.arc(q.x,q.y,14,0,Math.PI*2);ctx.fillStyle=colors[p];ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=(rolled&&p===turn&&legal(i))?'#111827':'#fff';ctx.stroke();ctx.fillStyle=p===2?'#382800':'#fff';ctx.font='bold 12px system-ui';ctx.fillText(String(i+1),q.x,q.y+4);}
- ctx.textAlign='left';
+const track=[];
+for(let x=1;x<=13;x++)track.push([6,x]);
+for(let y=1;y<=13;y++)track.push([y,8]);
+for(let x=13;x>=1;x--)track.push([8,x]);
+for(let y=13;y>=1;y--)track.push([y,6]);
+const homes=[[[7,1],[7,2],[7,3],[7,4],[7,5]],[[1,7],[2,7],[3,7],[4,7],[5,7]],[[7,13],[7,12],[7,11],[7,10],[7,9]],[[13,7],[12,7],[11,7],[10,7],[9,7]]];
+const yards=[[[2,2],[2,4],[4,2],[4,4]],[[2,10],[2,12],[4,10],[4,12]],[[10,10],[10,12],[12,10],[12,12]],[[10,2],[10,4],[12,2],[12,4]]];
+const key=(r,c)=>r+','+c;
+let playerCount=4,turn=0,dice=0,rolled=false,finished=false,sixes=0;
+let tokens=Array.from({length:4},()=>Array(4).fill(-1));
+function makeBoard(){
+ board.innerHTML='';
+ const bases=[{r:0,c:0,p:0},{r:0,c:9,p:1},{r:9,c:9,p:2},{r:9,c:0,p:3}];
+ const cells={};
+ for(let r=0;r<15;r++)for(let c=0;c<15;c++){
+  let el=document.createElement('div');el.className='cell';el.style.gridRow=r+1;el.style.gridColumn=c+1;board.appendChild(el);cells[key(r,c)]=el;
+ }
+ bases.forEach(b=>{let el=document.createElement('div');el.className='base '+colors[b.p];el.style.gridRow=(b.r+1)+'/span 6';el.style.gridColumn=(b.c+1)+'/span 6';el.innerHTML='<div class="yard"></div><div class="yard"></div><div class="yard"></div><div class="yard"></div>';board.appendChild(el);});
+ track.forEach(([r,c],i)=>{let el=cells[key(r,c)];el.classList.add('track');if(safe.includes(i))el.classList.add('safe');if(i===0||i===13||i===26||i===39)el.style.border='2px solid #111';});
+ homes.forEach((lane,p)=>lane.forEach(([r,c])=>{cells[key(r,c)].classList.add('lane',colors[p]);}));
+ let center=document.createElement('div');center.className='cell center';board.appendChild(center);
+ drawTokens();
 }
-function legal(i){let v=tokens[turn][i];return (v===-1&&dice===6)||(v>=0&&v<57&&v+dice<=57);}
-function setStatus(t){document.getElementById('status').textContent=t;}
-function update(){document.getElementById('turn').textContent=finished?names[turn]+' WINS!':names[turn]+' PLAYER\'S TURN';document.getElementById('dice').textContent=dice||'—';document.getElementById('roll').disabled=rolled||finished;draw();save();}
-function rollDice(){if(rolled||finished)return;dice=Math.floor(Math.random()*6)+1;rolled=true;document.getElementById('dice').textContent='🎲 '+dice;let moves=tokens[turn].map((_,i)=>legal(i)?i:-1).filter(i=>i>=0);if(!moves.length){setStatus(dice===6?'No token can move.':'No legal move. Turn passes.');setTimeout(nextTurn,900);}else setStatus('You rolled '+dice+'. Tap one of your legal '+names[turn]+' tokens.');update();}
-function nextTurn(){rolled=false;dice=0;turn=(turn+1)%playerCount;update();setStatus(names[turn]+' player: roll the dice.');}
-function chooseToken(p,i){if(finished||!rolled||p!==turn||!legal(i))return;let v=tokens[p][i];if(v===-1)tokens[p][i]=0;else tokens[p][i]=Math.min(57,v+dice);
- let pos=tokens[p][i];if(pos<52){let idx=(starts[p]+pos)%52;if(!safe.includes(idx)){for(let op=0;op<playerCount;op++)if(op!==p)for(let j=0;j<4;j++){let ov=tokens[op][j];if(ov>=0&&ov<52&&(starts[op]+ov)%52===idx)tokens[op][j]=-1;}}}
- if(tokens[p].every(x=>x===57)){finished=true;setStatus('🏆 '+names[p]+' PLAYER WINS THE GAME!');}
- else if(dice===6){rolled=false;dice=0;setStatus('Great! You rolled a six. '+names[p]+' gets another turn.');}
- else{nextTurn();return;}update();}
-canvas.addEventListener('click',e=>{let r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*600/r.width,y=(e.clientY-r.top)*600/r.height;for(let p=0;p<playerCount;p++)for(let i=0;i<4;i++){let q=tokenPoint(p,i);if(Math.hypot(q.x-x,q.y-y)<23){chooseToken(p,i);return;}}});
-function newGame(){turn=0;dice=0;rolled=false;finished=false;tokens=Array.from({length:4},()=>Array(4).fill(-1));setStatus('New game started. RED player rolls first.');update();}
-function togglePlayers(){playerCount=playerCount===4?3:playerCount===3?2:4;document.getElementById('players').textContent=playerCount;newGame();}
-function save(){try{localStorage.setItem('bwayoLudoSave',JSON.stringify({playerCount,turn,dice,rolled,finished,tokens}));}catch(e){}}
-function clearSaved(){localStorage.removeItem('bwayoLudoSave');newGame();setStatus('Saved Ludo game cleared.');}
-try{let s=JSON.parse(localStorage.getItem('bwayoLudoSave'));if(s){playerCount=s.playerCount||4;turn=s.turn||0;dice=s.dice||0;rolled=!!s.rolled;finished=!!s.finished;if(Array.isArray(s.tokens))tokens=s.tokens;document.getElementById('players').textContent=playerCount;}}catch(e){}
-update();
+function location(p,i){let v=tokens[p][i];if(v<0)return yards[p][i];if(v<52)return track[(starts[p]+v)%52];if(v<57)return homes[p][v-52];return [7,7];}
+function legal(i){let v=tokens[turn][i];return v===-1?dice===6:v>=0&&v<57&&v+dice<=57;}
+function drawTokens(){
+ document.querySelectorAll('.token').forEach(x=>x.remove());
+ for(let p=0;p<playerCount;p++)for(let i=0;i<4;i++){
+  let [r,c]=location(p,i),el=document.createElement('button');el.className='token '+colors[p]+(tokens[p][i]<0?' baseToken':'')+(rolled&&p===turn&&legal(i)?' legal':'');el.textContent=i+1;el.title=names[p]+' counter '+(i+1);el.onclick=()=>moveToken(p,i);
+  let target=[...board.children].find(x=>x.classList.contains('cell')&&x.style.gridRow===String(r+1)&&x.style.gridColumn===String(c+1));
+  if(tokens[p][i]<0){let base=[...board.children].find(x=>x.classList.contains('base')&&x.classList.contains(colors[p]));let slot=base?.children[i];if(slot)slot.appendChild(el);else target?.appendChild(el);}
+  else target?.appendChild(el);
+ }
+}
+function say(s){document.getElementById('status').textContent=s;}
+function update(){document.getElementById('turn').textContent=finished?names[turn]+' WINS!':names[turn]+' PLAYER’S TURN';document.getElementById('dice').textContent=dice?'🎲 '+dice:'🎲';document.getElementById('roll').disabled=rolled||finished;drawTokens();save();}
+function rollDice(){
+ if(rolled||finished)return;
+ dice=Math.floor(Math.random()*6)+1;
+ if(dice===6){sixes++;if(sixes===3){sixes=0;dice=0;rolled=false;say('Three sixes! Your turn is cancelled.');nextTurn();return;}}
+ else sixes=0;
+ rolled=true;
+ let moves=tokens[turn].map((_,i)=>legal(i)?i:-1).filter(i=>i>=0);
+ if(!moves.length){say('No legal move. Turn passes.');update();setTimeout(nextTurn,850);return;}
+ say('You rolled '+dice+'. Tap a highlighted counter to move it.');
+ update();
+}
+function moveToken(p,i){
+ if(finished||!rolled||p!==turn||!legal(i))return;
+ let v=tokens[p][i];tokens[p][i]=v<0?0:v+dice;
+ let pos=tokens[p][i];
+ if(pos<52){
+  let square=(starts[p]+pos)%52;
+  if(!safe.includes(square)){
+   for(let op=0;op<playerCount;op++)if(op!==p){
+    let opponents=tokens[op].map((v,j)=>v>=0&&v<52&&(starts[op]+v)%52===square?j:-1).filter(j=>j>=0);
+    if(opponents.length===1)tokens[op][opponents[0]]=-1;
+   }
+  }
+ }
+ if(tokens[p].every(v=>v===57)){finished=true;say('🏆 '+names[p]+' WINS! All four counters are home.');update();return;}
+ if(dice===6){rolled=false;dice=0;say('Great! A six gives you another roll.');update();}
+ else nextTurn();
+}
+function nextTurn(){rolled=false;dice=0;turn=(turn+1)%playerCount;update();say(names[turn]+' player: roll the dice.');}
+function newGame(){turn=0;dice=0;rolled=false;finished=false;sixes=0;tokens=Array.from({length:4},()=>Array(4).fill(-1));say('New classic Ludo game. RED starts. Roll a 6 to leave your yard.');update();}
+function changePlayers(){playerCount=playerCount===4?3:playerCount===3?2:4;document.getElementById('players').textContent=playerCount;newGame();}
+function save(){try{localStorage.setItem('bwayoClassicLudo',JSON.stringify({playerCount,turn,dice,rolled,finished,sixes,tokens}));}catch(e){}}
+try{let s=JSON.parse(localStorage.getItem('bwayoClassicLudo'));if(s&&Array.isArray(s.tokens)){playerCount=s.playerCount||4;turn=s.turn||0;dice=s.dice||0;rolled=!!s.rolled;finished=!!s.finished;sixes=s.sixes||0;tokens=s.tokens;}}catch(e){}
+document.getElementById('players').textContent=playerCount;makeBoard();update();
 </script></body></html>
