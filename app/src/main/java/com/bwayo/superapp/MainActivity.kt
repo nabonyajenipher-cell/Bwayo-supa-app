@@ -408,16 +408,16 @@ class MainActivity : Activity() {
   startActivity(Intent.createChooser(intent,"Share Bwayo post"))
  }
 
- private fun showLudo(){
-  val page=LinearLayout(this).apply{orientation=1;setBackgroundColor(Color.rgb(17,24,39))}
+ private fun showChess(){
+  val page=LinearLayout(this).apply{orientation=1;setBackgroundColor(Color.rgb(7,21,34))}
   page.addView(btn("← Back to Bwayo Super App"){if(token!=null)showHome() else showOfflineHome()})
   val game=WebView(this).apply{
-   setBackgroundColor(Color.rgb(17,24,39))
+   setBackgroundColor(Color.rgb(7,21,34))
    settings.javaScriptEnabled=true
    settings.domStorageEnabled=true
    settings.allowFileAccess=true
    webViewClient=WebViewClient()
-   loadUrl("file:///android_asset/ludo.html")
+   loadUrl("file:///android_asset/chess.html")
   }
   page.addView(game,LinearLayout.LayoutParams(-1,0,1f))
   setContentView(page)
