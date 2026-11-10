@@ -320,35 +320,48 @@ class MainActivity : Activity() {
  private fun startOfflineConversion(format:String){
   val uri=converterVideo
   if(uri==null){msg("Select an MP4 video first.");return}
+  if(format!="3gp"&&format!="mp3"){msg("Unsupported output format.");return}
   if(converterBusy){msg("A conversion is already running.");return}
   converterBusy=true
-  converterStatus?.text="Preparing video..."
+  converterStatus?.text="Preparing video... Keep Bwayo open until conversion finishes."
   val outputName="Bwayo_"+System.currentTimeMillis()+"."+format
   async{
-   var inFile:File?=null
-   var outFile:File?=null
+   var sourceFile:File?=null
+   var resultFile:File?=null
    try{
-    val sourceFile=File(cacheDir,"bwayo_input_"+System.currentTimeMillis()+".mp4")
-    inFile=sourceFile
-    contentResolver.openInputStream(uri)?.use{source->FileOutputStream(sourceFile).use{dest->source.copyTo(dest)}}?:throw Exception("Cannot open selected video")
-    val resultFile=File(cacheDir,outputName)
-    outFile=resultFile
-    val command=if(format=="3gp") "-y -i \"${sourceFile.absolutePath}\" -map 0:v:0 -map 0:a? -c:v mpeg4 -q:v 5 -c:a aac -b:a 128k -f 3gp \"${resultFile.absolutePath}\"" else "-y -i \"${sourceFile.absolutePath}\" -vn -c:a libmp3lame -q:a 2 -f mp3 \"${resultFile.absolutePath}\""
-    FFmpegKit.executeAsync(command){session->
-     val success=ReturnCode.isSuccess(session.returnCode)
-     try{
-      if(success&&resultFile.exists()&&resultFile.length()>0){
-       val saved=saveConvertedFile(resultFile,outputName,format)
-       runOnUiThread{converterBusy=false;converterStatus?.text="Conversion complete ✓ Saved: $saved";msg("Your $format file is ready and saved on this phone.")}
-      }else{
-       runOnUiThread{converterBusy=false;converterStatus?.text="Conversion failed. Try another MP4 video.";msg("Conversion failed. This file may use an unsupported codec.")}
-      }
-     }catch(e:Exception){runOnUiThread{converterBusy=false;converterStatus?.text="Could not save converted file.";msg(e.message?:"Could not save file.")}}
-     finally{sourceFile.delete();resultFile.delete()}
+    val input=File(cacheDir,"bwayo_input_"+System.currentTimeMillis()+".mp4")
+    sourceFile=input
+    contentResolver.openInputStream(uri)?.use{source->FileOutputStream(input).use{dest->source.copyTo(dest)}}?:throw Exception("Cannot read the selected video. Select it again and retry.")
+    if(input.length()==0L)throw Exception("The selected video is empty or could not be read.")
+    val output=File(cacheDir,outputName)
+    resultFile=output
+    runOnUiThread{converterStatus?.text=if(format=="mp3")"Extracting audio... Please keep the app open." else "Converting video to 3GP... Please keep the app open."}
+    val command=if(format=="3gp"){
+     "-nostdin -hide_banner -loglevel error -y -i \"${input.absolutePath}\" -map 0:v:0 -map 0:a? -threads 1 -c:v mpeg4 -q:v 5 -c:a aac -b:a 128k -f 3gp \"${output.absolutePath}\""
+    }else{
+     "-nostdin -hide_banner -loglevel error -y -i \"${input.absolutePath}\" -map 0:a:0 -vn -threads 1 -c:a libmp3lame -b:a 128k -f mp3 \"${output.absolutePath}\""
+    }
+    // Run FFmpeg synchronously on this worker thread. This avoids a nested
+    // native callback and keeps all file copying and saving off the UI thread.
+    val session=FFmpegKit.execute(command)
+    val success=ReturnCode.isSuccess(session.returnCode)
+    if(!success||!output.exists()||output.length()==0L){
+     val details=(session.output?:session.failStackTrace?:"").trim().takeLast(500)
+     val reason=if(format=="mp3"&&details.contains("Stream map",true))"This video may not contain an audio track." else "FFmpeg could not process this file."
+     throw Exception(if(details.isBlank())reason else "$reason $details")
+    }
+    val saved=saveConvertedFile(output,outputName,format)
+    runOnUiThread{
+     converterBusy=false
+     converterStatus?.text="Conversion complete ✓ Saved: $saved"
+     msg("Your ${format.uppercase()} file is ready in Downloads/Bwayo Converted.")
     }
    }catch(e:Exception){
-    inFile?.delete();outFile?.delete()
-    runOnUiThread{converterBusy=false;converterStatus?.text="Could not start conversion.";msg(e.message?:"Conversion error.")}
+    val message=e.message?: "Conversion failed. Please try another MP4 file."
+    runOnUiThread{converterBusy=false;converterStatus?.text="Conversion failed: $message";msg(message)}
+   }finally{
+    sourceFile?.delete()
+    resultFile?.delete()
    }
   }
  }
