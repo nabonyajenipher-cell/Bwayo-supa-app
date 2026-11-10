@@ -1,4 +1,5 @@
 name: Build Bwayo Super App (APK and AAB)
+# Rebuild after removing the offline converter; app features otherwise unchanged.
 on:
   push:
     branches: [main]
