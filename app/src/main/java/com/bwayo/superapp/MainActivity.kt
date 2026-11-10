@@ -51,6 +51,7 @@ class MainActivity : Activity() {
   l.addView(TextView(this).apply{text="Your apps and saved content stay on this phone.";textSize=14f;setTextColor(Color.DKGRAY);setPadding(4,0,4,12)})
   l.addView(btn("🌐 SWITCH TO ONLINE MODE"){if(!hasInternet()){msg("No internet connection. Connect to Wi-Fi or mobile data, then try again.");return@btn};if(token!=null&&userId!=null)loadHome() else showAuth()})
   l.addView(btn("🎮 PLAY BWAYO SUPER GAME"){showSimulator()})
+  l.addView(btn("🎲 PLAY OFFLINE LUDO"){showLudo()})
   l.addView(btn("📝 CREATE A LOCAL POST"){createOfflinePost()})
   l.addView(btn("🌍 MY LOCAL COMMUNITY"){showOfflineFeed()})
   l.addView(btn("👤 MY PROFILE"){showOfflineProfile()})
@@ -219,7 +220,8 @@ class MainActivity : Activity() {
    "My profile" to {showProfile()},
    "My posts" to {showMyPosts()},
    "Notifications" to {showNotifications()},
-   "Play simulator" to {showSimulator()}
+   "Play simulator" to {showSimulator()},
+   "Play Ludo" to {showLudo()}
   )
   var index=0
   while(index<primary.size){
@@ -227,7 +229,7 @@ class MainActivity : Activity() {
    for(col in 0..1){
     if(index<primary.size){
      val item=primary[index]
-     val symbol=when(item.first){"Explore community"->"🌍";"My profile"->"👤";"My posts"->"📝";"Play simulator"->"🎮";else->"🔔"}
+     val symbol=when(item.first){"Explore community"->"🌍";"My profile"->"👤";"My posts"->"📝";"Play simulator"->"🎮";"Play Ludo"->"🎲";else->"🔔"}
      val card=LinearLayout(this).apply{
       orientation=1;gravity=Gravity.CENTER;background=rounded(Color.WHITE,18)
       setPadding(dp(8),dp(13),dp(8),dp(13));elevation=dp(2).toFloat()
@@ -406,6 +408,20 @@ class MainActivity : Activity() {
   startActivity(Intent.createChooser(intent,"Share Bwayo post"))
  }
 
+ private fun showLudo(){
+  val page=LinearLayout(this).apply{orientation=1;setBackgroundColor(Color.rgb(17,24,39))}
+  page.addView(btn("← Back to Bwayo Super App"){if(token!=null)showHome() else showOfflineHome()})
+  val game=WebView(this).apply{
+   setBackgroundColor(Color.rgb(17,24,39))
+   settings.javaScriptEnabled=true
+   settings.domStorageEnabled=true
+   settings.allowFileAccess=true
+   webViewClient=WebViewClient()
+   loadUrl("file:///android_asset/ludo.html")
+  }
+  page.addView(game,LinearLayout.LayoutParams(-1,0,1f))
+  setContentView(page)
+ }
  private fun showSimulator(){
   val page=LinearLayout(this).apply{orientation=1;setBackgroundColor(Color.rgb(8,24,18))}
   page.addView(btn("← Back to Bwayo Super App"){showOfflineHome()})
