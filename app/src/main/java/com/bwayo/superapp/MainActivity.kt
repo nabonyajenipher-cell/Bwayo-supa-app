@@ -8,12 +8,6 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.app.DownloadManager
 import android.os.Environment
-import android.content.ContentValues
-import android.provider.MediaStore
-import java.io.File
-import java.io.FileOutputStream
-import com.arthenica.ffmpegkit.FFmpegKit
-import com.arthenica.ffmpegkit.ReturnCode
 import android.widget.MediaController
 import android.widget.VideoView
 import android.graphics.Color
@@ -36,7 +30,7 @@ class MainActivity : Activity() {
  private val anonKey="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4amlhZHJyYW9mbW5yZWZmdnh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQxNDc4MjcsImV4cCI6MjEwOTcyMzgyN30.wr1UqU5WAq3kp-sV0Hb0xWMgDzNq8ycwluCTe7ajInk"
  private val worker=Executors.newFixedThreadPool(4)
  private var token:String?=null; private var userId:String?=null; private var userEmail:String?=null
- private var displayName="Member"; private var isAdmin=false; private lateinit var feed:LinearLayout; private var pickedVideo:Uri?=null; private var videoStatus:TextView?=null; private var pickedAvatar:Uri?=null; private var avatarUrl:String?=null; private var converterVideo:Uri?=null; private var converterStatus:TextView?=null; private var converterBusy=false
+ private var displayName="Member"; private var isAdmin=false; private lateinit var feed:LinearLayout; private var pickedVideo:Uri?=null; private var videoStatus:TextView?=null; private var pickedAvatar:Uri?=null; private var avatarUrl:String?=null
  override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState)
   displayName=getSharedPreferences("bwayo_offline",MODE_PRIVATE).getString("name","BWAYO PLAYER")?:"BWAYO PLAYER"
   showOfflineHome()
@@ -58,7 +52,6 @@ class MainActivity : Activity() {
   l.addView(btn("🌐 SWITCH TO ONLINE MODE"){if(!hasInternet()){msg("No internet connection. Connect to Wi-Fi or mobile data, then try again.");return@btn};if(token!=null&&userId!=null)loadHome() else showAuth()})
   l.addView(btn("🎮 PLAY BWAYO SUPER GAME"){showSimulator()})
   l.addView(btn("♟️ PLAY OFFLINE CHESS"){showChess()})
-  l.addView(btn("🎞️ OFFLINE VIDEO CONVERTER"){showOfflineVideoConverter()})
   l.addView(btn("📝 CREATE A LOCAL POST"){createOfflinePost()})
   l.addView(btn("🌍 MY LOCAL COMMUNITY"){showOfflineFeed()})
   l.addView(btn("👤 MY PROFILE"){showOfflineProfile()})
@@ -228,8 +221,7 @@ class MainActivity : Activity() {
    "My posts" to {showMyPosts()},
    "Notifications" to {showNotifications()},
    "Play simulator" to {showSimulator()},
-   "Play Chess" to {showChess()},
-   "Offline video converter" to {showOfflineVideoConverter()}
+   "Play Chess" to {showChess()}
   )
   var index=0
   while(index<primary.size){
@@ -302,87 +294,8 @@ class MainActivity : Activity() {
   setScrollableContent(l)
   refreshFeed()
  }
- override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){super.onActivityResult(requestCode,resultCode,data);if(requestCode==410&&resultCode==RESULT_OK){pickedVideo=data?.data;if(pickedVideo!=null){videoStatus?.text="Video selected ✓  Add a caption, then tap Publish post.";msg("Video selected. Add a caption and tap Publish post.")}else{videoStatus?.text="No video selected"}};if(requestCode==411&&resultCode==RESULT_OK){pickedAvatar=data?.data;if(pickedAvatar!=null)msg("Profile photo selected. Tap Save photo.")};if(requestCode==412&&resultCode==RESULT_OK){converterVideo=data?.data;converterStatus?.text=if(converterVideo!=null)"MP4 video selected. Choose 3GP or MP3 conversion below." else "No video selected.";converterVideo?.let{try{contentResolver.takePersistableUriPermission(it,Intent.FLAG_GRANT_READ_URI_PERMISSION)}catch(_:Exception){}}}}
+ override fun onActivityResult(requestCode:Int,resultCode:Int,data:Intent?){super.onActivityResult(requestCode,resultCode,data);if(requestCode==410&&resultCode==RESULT_OK){pickedVideo=data?.data;if(pickedVideo!=null){videoStatus?.text="Video selected ✓  Add a caption, then tap Publish post.";msg("Video selected. Add a caption and tap Publish post.")}else{videoStatus?.text="No video selected"}};if(requestCode==411&&resultCode==RESULT_OK){pickedAvatar=data?.data;if(pickedAvatar!=null)msg("Profile photo selected. Tap Save photo.")}}
 
- private fun showOfflineVideoConverter(){
-  val l=base()
-  l.addView(heading("OFFLINE VIDEO CONVERTER"))
-  l.addView(TextView(this).apply{text="Choose an MP4 video from your phone, then convert it without internet. Converted files are saved on this device.";textSize=15f;setTextColor(Color.DKGRAY);setPadding(dp(8),dp(16),dp(8),dp(12))})
-  converterStatus=TextView(this).apply{text=if(converterVideo==null)"No MP4 video selected." else "MP4 video selected.";textSize=14f;setTextColor(Color.rgb(30,90,70));setPadding(dp(8),dp(8),dp(8),dp(12))}
-  l.addView(btn("📁 SELECT MP4 VIDEO"){val pick=Intent(Intent.ACTION_OPEN_DOCUMENT).apply{addCategory(Intent.CATEGORY_OPENABLE);type="video/mp4";addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)};startActivityForResult(pick,412)})
-  l.addView(converterStatus)
-  l.addView(btn("🎬 CONVERT TO 3GP"){startOfflineConversion("3gp")})
-  l.addView(btn("🎵 EXTRACT AUDIO TO MP3"){startOfflineConversion("mp3")})
-  l.addView(TextView(this).apply{text="• MP4 → 3GP video\n• MP4 → MP3 audio\n• Works offline after installation\n• Original video is not deleted\n• Saves files in Downloads/Bwayo Converted.";textSize=13f;setTextColor(Color.DKGRAY);setPadding(dp(10),dp(14),dp(10),dp(18))})
-  l.addView(btn("← BACK HOME"){if(token!=null)showHome() else showOfflineHome()})
-  setScrollableContent(l)
- }
- private fun startOfflineConversion(format:String){
-  val uri=converterVideo
-  if(uri==null){msg("Select an MP4 video first.");return}
-  if(format!="3gp"&&format!="mp3"){msg("Unsupported output format.");return}
-  if(converterBusy){msg("A conversion is already running.");return}
-  converterBusy=true
-  converterStatus?.text="Preparing video... Keep Bwayo open until conversion finishes."
-  val outputName="Bwayo_"+System.currentTimeMillis()+"."+format
-  async{
-   var sourceFile:File?=null
-   var resultFile:File?=null
-   try{
-    val input=File(cacheDir,"bwayo_input_"+System.currentTimeMillis()+".mp4")
-    sourceFile=input
-    contentResolver.openInputStream(uri)?.use{source->FileOutputStream(input).use{dest->source.copyTo(dest)}}?:throw Exception("Cannot read the selected video. Select it again and retry.")
-    if(input.length()==0L)throw Exception("The selected video is empty or could not be read.")
-    val output=File(cacheDir,outputName)
-    resultFile=output
-    runOnUiThread{converterStatus?.text=if(format=="mp3")"Extracting audio... Please keep the app open." else "Converting video to 3GP... Please keep the app open."}
-    val command=if(format=="3gp"){
-     "-nostdin -hide_banner -loglevel error -y -i \"${input.absolutePath}\" -map 0:v:0 -map 0:a? -threads 1 -c:v mpeg4 -q:v 5 -c:a aac -b:a 128k -f 3gp \"${output.absolutePath}\""
-    }else{
-     "-nostdin -hide_banner -loglevel error -y -i \"${input.absolutePath}\" -map 0:a:0 -vn -threads 1 -c:a libmp3lame -b:a 128k -f mp3 \"${output.absolutePath}\""
-    }
-    // Run FFmpeg synchronously on this worker thread. This avoids a nested
-    // native callback and keeps all file copying and saving off the UI thread.
-    val session=FFmpegKit.execute(command)
-    val success=ReturnCode.isSuccess(session.returnCode)
-    if(!success||!output.exists()||output.length()==0L){
-     val details=(session.output?:session.failStackTrace?:"").trim().takeLast(500)
-     val reason=if(format=="mp3"&&details.contains("Stream map",true))"This video may not contain an audio track." else "FFmpeg could not process this file."
-     throw Exception(if(details.isBlank())reason else "$reason $details")
-    }
-    val saved=saveConvertedFile(output,outputName,format)
-    runOnUiThread{
-     converterBusy=false
-     converterStatus?.text="Conversion complete ✓ Saved: $saved"
-     msg("Your ${format.uppercase()} file is ready in Downloads/Bwayo Converted.")
-    }
-   }catch(e:Exception){
-    val message=e.message?: "Conversion failed. Please try another MP4 file."
-    runOnUiThread{converterBusy=false;converterStatus?.text="Conversion failed: $message";msg(message)}
-   }finally{
-    sourceFile?.delete()
-    resultFile?.delete()
-   }
-  }
- }
- private fun saveConvertedFile(file:File,name:String,format:String):String{
-  val mime=if(format=="3gp")"video/3gpp" else "audio/mpeg"
-  if(android.os.Build.VERSION.SDK_INT>=29){
-   val values=ContentValues().apply{put(MediaStore.MediaColumns.DISPLAY_NAME,name);put(MediaStore.MediaColumns.MIME_TYPE,mime);put(MediaStore.MediaColumns.RELATIVE_PATH,Environment.DIRECTORY_DOWNLOADS+"/Bwayo Converted");put(MediaStore.MediaColumns.IS_PENDING,1)}
-   val collection=if(format=="3gp")MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY) else MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-   val uri=contentResolver.insert(collection,values)?:throw Exception("Could not create a Downloads file")
-   try{
-    contentResolver.openOutputStream(uri)?.use{out->file.inputStream().use{it.copyTo(out)}}?:throw Exception("Could not write converted file")
-    val done=ContentValues().apply{put(MediaStore.MediaColumns.IS_PENDING,0)}
-    contentResolver.update(uri,done,null,null)
-   }catch(e:Exception){contentResolver.delete(uri,null,null);throw e}
-   return "Downloads/Bwayo Converted/$name"
-  }
-  val dir=File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),"Bwayo Converted")
-  if(!dir.exists()&&!dir.mkdirs())throw Exception("Cannot create output folder")
-  val target=File(dir,name);file.copyTo(target,true)
-  return target.absolutePath
- }
  private fun uploadVideo(uri:Uri):String{
   val size=contentResolver.openAssetFileDescriptor(uri,"r")?.use{it.length}?:-1L
   if(size==0L)throw Exception("Selected video is empty")
