@@ -14,7 +14,6 @@ Search terms: Bwayo Supa App, Bwayo Super App, Bwayo Android app.
 
 ## Website
 
-The public website is prepared in the `docs/` folder and is intended for GitHub Pages:
 https://nabonyajenipher-cell.github.io/Bwayo-supa-app/
 
-Google indexing is not immediate or guaranteed. The website must first be published through GitHub Pages.
+The website must be published through GitHub Pages before it can appear in Google Search. Google indexing can take time and is not guaranteed.
