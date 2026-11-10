@@ -4,6 +4,8 @@ import android.app.AlertDialog
 import android.os.Bundle
 import android.content.Intent
 import android.net.Uri
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.app.DownloadManager
 import android.os.Environment
 import android.widget.MediaController
@@ -34,6 +36,12 @@ class MainActivity : Activity() {
   showOfflineHome()
  }
  private fun offlinePrefs()=getSharedPreferences("bwayo_offline",MODE_PRIVATE)
+ private fun hasInternet():Boolean{
+  val manager=getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+  val network=manager.activeNetwork?:return false
+  val capabilities=manager.getNetworkCapabilities(network)?:return false
+  return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)&&capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+ }
  private fun offlinePosts():JSONArray=try{JSONArray(offlinePrefs().getString("posts","[]"))}catch(_:Exception){JSONArray()}
  private fun showOfflineHome(){
   val l=base()
@@ -41,6 +49,7 @@ class MainActivity : Activity() {
   l.addView(TextView(this).apply{text="OFFLINE MODE • No account or internet required";textSize=13f;gravity=Gravity.CENTER;setTextColor(Color.rgb(0,105,75));setPadding(8,14,8,14)})
   l.addView(TextView(this).apply{text="Welcome, $displayName 👋";textSize=23f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(30,41,90));setPadding(4,12,4,4)})
   l.addView(TextView(this).apply{text="Your apps and saved content stay on this phone.";textSize=14f;setTextColor(Color.DKGRAY);setPadding(4,0,4,12)})
+  l.addView(btn("🌐 SWITCH TO ONLINE MODE"){if(!hasInternet()){msg("No internet connection. Connect to Wi-Fi or mobile data, then try again.");return@btn};if(token!=null&&userId!=null)loadHome() else showAuth()})
   l.addView(btn("🎮 PLAY BWAYO SUPER GAME"){showSimulator()})
   l.addView(btn("📝 CREATE A LOCAL POST"){createOfflinePost()})
   l.addView(btn("🌍 MY LOCAL COMMUNITY"){showOfflineFeed()})
@@ -202,6 +211,7 @@ class MainActivity : Activity() {
    setTextColor(Color.rgb(30,41,90));setPadding(dp(4),dp(22),dp(4),dp(3))
   })
   l.addView(TextView(this).apply{text="Your community, all in one place.";textSize=14f;setTextColor(Color.rgb(100,105,130));setPadding(dp(4),0,dp(4),dp(16))})
+  l.addView(btn("📴 SWITCH TO OFFLINE MODE"){showOfflineHome()})
   // Main phone shortcuts
   l.addView(TextView(this).apply{text="GET STARTED";textSize=12f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.GRAY);setPadding(dp(4),dp(5),dp(4),dp(8))})
   val primary=listOf<Pair<String,()->Unit>>(
