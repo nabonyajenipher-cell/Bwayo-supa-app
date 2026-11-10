@@ -51,12 +51,12 @@ class MainActivity : Activity() {
   l.addView(TextView(this).apply{text="Your apps and saved content stay on this phone.";textSize=14f;setTextColor(Color.DKGRAY);setPadding(4,0,4,12)})
   l.addView(btn("🌐 SWITCH TO ONLINE MODE"){if(!hasInternet()){msg("No internet connection. Connect to Wi-Fi or mobile data, then try again.");return@btn};if(token!=null&&userId!=null)loadHome() else showAuth()})
   l.addView(btn("🎮 PLAY BWAYO SUPER GAME"){showSimulator()})
-  l.addView(btn("🎲 PLAY OFFLINE LUDO"){showLudo()})
+  l.addView(btn("♟️ PLAY OFFLINE CHESS"){showChess()})
   l.addView(btn("📝 CREATE A LOCAL POST"){createOfflinePost()})
   l.addView(btn("🌍 MY LOCAL COMMUNITY"){showOfflineFeed()})
   l.addView(btn("👤 MY PROFILE"){showOfflineProfile()})
   l.addView(btn("⚙️ SETTINGS & STORAGE"){showOfflineSettings()})
-  l.addView(btn("ℹ️ APP FEATURES"){showInfoPage("BWAYO SUPER APP • OFFLINE","Works without mobile data or Wi-Fi.",listOf("City life simulator" to "Play, work, earn money, buy homes and vehicles. Your game progress is saved on this phone.","Local community posts" to "Create and read text posts stored privately on this phone.","Local profile" to "Choose a display name saved on this phone.","Offline storage" to "Your posts and game progress remain available without internet."))})
+  l.addView(btn("ℹ️ APP FEATURES"){showInfoPage("BWAYO SUPER APP • OFFLINE","Works without mobile data or Wi-Fi.",listOf("City life simulator" to "Play, work, earn money, buy homes and vehicles. Your game progress is saved on this phone.","Local community posts" to "Create and read text posts stored privately on this phone.","Local profile" to "Choose a display name saved on this phone.","Offline chess" to "Play standard two-player chess without internet. Your game runs on this phone.", "Offline storage" to "Your posts and game progress remain available without internet."))})
   l.addView(TextView(this).apply{text="BWAYO EMMANUEL • OWNER & FOUNDER";textSize=11f;gravity=Gravity.CENTER;setTextColor(Color.GRAY);setPadding(4,18,4,8)})
   setScrollableContent(l)
  }
@@ -221,7 +221,7 @@ class MainActivity : Activity() {
    "My posts" to {showMyPosts()},
    "Notifications" to {showNotifications()},
    "Play simulator" to {showSimulator()},
-   "Play Ludo" to {showLudo()}
+   "Play Chess" to {showChess()}
   )
   var index=0
   while(index<primary.size){
@@ -229,7 +229,7 @@ class MainActivity : Activity() {
    for(col in 0..1){
     if(index<primary.size){
      val item=primary[index]
-     val symbol=when(item.first){"Explore community"->"🌍";"My profile"->"👤";"My posts"->"📝";"Play simulator"->"🎮";"Play Ludo"->"🎲";else->"🔔"}
+     val symbol=when(item.first){"Explore community"->"🌍";"My profile"->"👤";"My posts"->"📝";"Play simulator"->"🎮";"Play Chess"->"♟️";else->"🔔"}
      val card=LinearLayout(this).apply{
       orientation=1;gravity=Gravity.CENTER;background=rounded(Color.WHITE,18)
       setPadding(dp(8),dp(13),dp(8),dp(13));elevation=dp(2).toFloat()
