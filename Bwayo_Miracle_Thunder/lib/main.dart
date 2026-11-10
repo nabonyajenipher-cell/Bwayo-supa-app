@@ -141,7 +141,7 @@ class _FirmwarePageState extends State<FirmwarePage> {
         DropdownButtonFormField<String>(
           value: brand,
           decoration: const InputDecoration(labelText: 'Device manufacturer', border: OutlineInputBorder()),
-          items: const ['Samsung', 'Google Pixel', 'Motorola', 'Xiaomi', 'Other'].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
+          items: const ['Samsung', 'Tecno', 'Infinix', 'Itel', 'Google Pixel', 'Motorola', 'Xiaomi', 'Other'].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
           onChanged: (v) => setState(() => brand = v ?? brand),
         ),
         const SizedBox(height: 16),
