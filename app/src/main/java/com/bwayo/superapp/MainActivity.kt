@@ -68,12 +68,12 @@ class MainActivity : Activity() {
    }
   }
   val shortcuts=listOf(
-   Triple("🎮","City simulator","Play and earn",::showSimulator),
-   Triple("♟️","Offline chess","Play a match",::showChess),
-   Triple("📝","Create a post","Save it locally",::createOfflinePost),
-   Triple("🌍","My community","Your saved posts",::showOfflineFeed),
-   Triple("👤","My profile","Edit your name",::showOfflineProfile),
-   Triple("⚙️","Settings","Manage local data",::showOfflineSettings)
+   listOf("🎮","City simulator","Play and earn") to {showSimulator()},
+   listOf("♟️","Offline chess","Play a match") to {showChess()},
+   listOf("📝","Create a post","Save it locally") to {createOfflinePost()},
+   listOf("🌍","My community","Your saved posts") to {showOfflineFeed()},
+   listOf("👤","My profile","Edit your name") to {showOfflineProfile()},
+   listOf("⚙️","Settings","Manage local data") to {showOfflineSettings()}
   )
   var index=0
   while(index<shortcuts.size){
@@ -81,7 +81,7 @@ class MainActivity : Activity() {
    for(col in 0..1){
     if(index<shortcuts.size){
      val item=shortcuts[index]
-     row.addView(shortcut(item.first,item.second,item.third,item.fourth),LinearLayout.LayoutParams(0,dp(116),1f).apply{setMargins(dp(4),dp(4),dp(4),dp(4))})
+     row.addView(shortcut(item.first[0],item.first[1],item.first[2],item.second),LinearLayout.LayoutParams(0,dp(116),1f).apply{setMargins(dp(4),dp(4),dp(4),dp(4))})
      index++
     }else row.addView(Space(this),LinearLayout.LayoutParams(0,dp(116),1f))
    }
