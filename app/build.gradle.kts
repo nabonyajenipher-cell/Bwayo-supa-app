@@ -38,6 +38,7 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+}
 dependencies {
     implementation("dev.ffmpegkit-maintained:ffmpeg-kit-full:8.1.7")
 }
