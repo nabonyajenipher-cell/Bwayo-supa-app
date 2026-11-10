@@ -3,59 +3,99 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bwayo Super App — Download for Android</title>
-  <meta name="description" content="Discover Bwayo Super App for Android. Explore its games and useful features, use supported features online or offline, and download the latest APK.">
-  <meta name="keywords" content="Bwayo Supa App, Bwayo Super App, Bwayo app, Android app, offline games, online games">
+  <title>Bwayo Super App — Games, Community & More</title>
+  <meta name="description" content="Discover Bwayo Super App for Android. Connect with the community, share posts and videos, play games, and use supported features online or offline.">
+  <meta name="keywords" content="Bwayo Supa App, Bwayo Super App, Bwayo app, Android app, offline chess, online community, mobile games">
   <meta name="author" content="BWAYO EMMANUEL">
   <meta name="robots" content="index,follow">
   <link rel="canonical" href="https://nabonyajenipher-cell.github.io/Bwayo-supa-app/">
+  <meta name="theme-color" content="#123b91">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Bwayo Super App">
-  <meta property="og:description" content="Discover Bwayo Super App for Android and download the latest version.">
+  <meta property="og:description" content="Your community, games and useful features in one Android app.">
   <meta property="og:url" content="https://nabonyajenipher-cell.github.io/Bwayo-supa-app/">
-  <meta name="theme-color" content="#101827">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "Bwayo Super App",
     "alternateName": "Bwayo Supa App",
-    "applicationCategory": "UtilitiesApplication",
+    "applicationCategory": "SocialNetworkingApplication",
     "operatingSystem": "Android",
-    "description": "An Android app with games and useful features, including supported online and offline use.",
+    "description": "An Android app for community posts and videos, games, and supported online and offline features.",
     "author": {"@type": "Person", "name": "BWAYO EMMANUEL"},
     "downloadUrl": "https://github.com/nabonyajenipher-cell/Bwayo-supa-app/releases/latest"
   }
   </script>
   <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, Arial, sans-serif; color: #f8fafc; background: radial-gradient(circle at top, #23456b, #101827 58%); min-height: 100vh; }
-    main { width: min(900px, 92%); margin: auto; padding: 72px 0; }
-    .panel { padding: clamp(28px, 6vw, 56px); border: 1px solid #ffffff24; border-radius: 28px; background: #ffffff0c; box-shadow: 0 24px 80px #0005; }
-    .tag { display: inline-block; padding: 8px 13px; border-radius: 999px; background: #1d9b70; font-size: 13px; font-weight: 700; letter-spacing: .04em; }
-    h1 { margin: 22px 0 12px; font-size: clamp(38px, 8vw, 68px); line-height: 1.02; }
-    p { color: #cbd5e1; font-size: 18px; line-height: 1.7; }
-    .actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px; }
-    a.button { display: inline-block; padding: 15px 22px; border-radius: 12px; background: #22c58b; color: #062719; font-weight: 800; text-decoration: none; }
-    a.secondary { background: #ffffff16; color: white; border: 1px solid #ffffff30; }
-    h2 { margin-top: 38px; }
-    footer { margin-top: 26px; color: #94a3b8; font-size: 14px; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#14264b;background:#f4f7ff}
+    a{color:inherit}
+    .hero{position:relative;overflow:hidden;background:linear-gradient(130deg,#102d70 0%,#2458c7 55%,#6655df 100%);color:white}
+    .hero:before,.hero:after{content:"";position:absolute;border-radius:50%;background:#ffffff12}
+    .hero:before{width:340px;height:340px;right:-110px;top:-150px}
+    .hero:after{width:220px;height:220px;left:-110px;bottom:-130px}
+    .wrap{width:min(1060px,92%);margin:auto;position:relative;z-index:1}
+    header{display:flex;align-items:center;justify-content:space-between;padding:24px 0}
+    .brand{font-weight:900;letter-spacing:.06em;font-size:18px}
+    .pill{border:1px solid #ffffff55;background:#ffffff16;border-radius:999px;padding:9px 13px;font-size:12px;font-weight:750}
+    .hero-content{padding:62px 0 76px;max-width:760px}
+    .eyebrow{font-size:12px;letter-spacing:.16em;font-weight:800;color:#dce7ff}
+    h1{font-size:clamp(42px,8vw,76px);line-height:1.02;letter-spacing:-.055em;margin:17px 0}
+    .lead{font-size:clamp(17px,2.5vw,21px);line-height:1.65;color:#e5edff;max-width:650px}
+    .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+    .button{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-weight:850;border-radius:14px;padding:15px 20px;background:#fff;color:#173b8d;box-shadow:0 10px 25px #071c4a30}
+    .button.secondary{background:#ffffff16;color:white;border:1px solid #ffffff55;box-shadow:none}
+    main{padding:54px 0 64px}
+    .section-head{text-align:center;max-width:650px;margin:0 auto 28px}
+    h2{font-size:clamp(26px,4vw,36px);letter-spacing:-.035em;margin:0 0 10px}
+    .muted{color:#64748b;line-height:1.65}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .card{background:white;border:1px solid #e5eaf5;border-radius:20px;padding:23px;box-shadow:0 12px 32px #19366b0b}
+    .icon{width:46px;height:46px;border-radius:14px;background:#eaf0ff;display:grid;place-items:center;font-size:23px}
+    h3{margin:15px 0 7px;font-size:18px}
+    .card p{margin:0;color:#64748b;line-height:1.6;font-size:14px}
+    .download{margin-top:42px;border-radius:24px;padding:30px;background:linear-gradient(120deg,#e9efff,#f3efff);display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .download p{margin:7px 0 0;color:#64748b;line-height:1.6}
+    .download .button{background:#2458c7;color:white;white-space:nowrap}
+    footer{border-top:1px solid #e2e8f0;padding:24px 0;color:#64748b;font-size:13px;text-align:center}
+    @media(max-width:720px){.grid{grid-template-columns:1fr 1fr}.hero-content{padding:44px 0 60px}.download{align-items:flex-start;flex-direction:column}}
+    @media(max-width:460px){.grid{grid-template-columns:1fr}.pill{display:none}.hero-content{padding:35px 0 50px}.button{width:100%}}
   </style>
 </head>
 <body>
-  <main>
-    <section class="panel">
-      <span class="tag">ANDROID APPLICATION</span>
-      <h1>Bwayo Super App</h1>
-      <p>Welcome to Bwayo Super App — one place to discover games and useful app features. Use supported features online or offline.</p>
-      <div class="actions">
-        <a class="button" href="https://github.com/nabonyajenipher-cell/Bwayo-supa-app/releases/latest">Download latest Android APK</a>
-        <a class="button secondary" href="https://github.com/nabonyajenipher-cell/Bwayo-supa-app">View app on GitHub</a>
+  <section class="hero">
+    <div class="wrap">
+      <header><div class="brand">BWAYO <span style="color:#c9d8ff">SUPER APP</span></div><span class="pill">MADE FOR THE COMMUNITY</span></header>
+      <div class="hero-content">
+        <div class="eyebrow">ONE APP. MORE WAYS TO CONNECT.</div>
+        <h1>Your community.<br>Your games. Your space.</h1>
+        <p class="lead">Meet the Bwayo Super App — share posts and videos, keep up with community activity, and enjoy games with supported offline and online features.</p>
+        <div class="actions">
+          <a class="button" href="https://github.com/nabonyajenipher-cell/Bwayo-supa-app/releases/latest">Get the Android app&nbsp; ↓</a>
+          <a class="button secondary" href="https://github.com/nabonyajenipher-cell/Bwayo-supa-app">Explore the project</a>
+        </div>
       </div>
-      <h2>About the app</h2>
-      <p>Find Bwayo Super App by searching for “Bwayo Supa App” or “Bwayo Super App”. Check the release page for the latest available version and installation details.</p>
-      <footer>Owner &amp; Founder: BWAYO EMMANUEL</footer>
+    </div>
+  </section>
+  <main class="wrap">
+    <div class="section-head">
+      <h2>Everything in one place</h2>
+      <p class="muted">A simple, phone-friendly space for sharing, playing and staying connected.</p>
+    </div>
+    <section class="grid" aria-label="App features">
+      <article class="card"><div class="icon">🎬</div><h3>Posts & videos</h3><p>Share updates and videos with the Bwayo community.</p></article>
+      <article class="card"><div class="icon">💬</div><h3>Community activity</h3><p>Explore posts, like, comment, share and follow notifications.</p></article>
+      <article class="card"><div class="icon">👤</div><h3>Your profile</h3><p>Set up your profile and choose a photo for your account.</p></article>
+      <article class="card"><div class="icon">♟️</div><h3>Play chess</h3><p>Enjoy the included offline chess game on your phone.</p></article>
+      <article class="card"><div class="icon">🎮</div><h3>Play & explore</h3><p>Open the built-in simulator and explore its game world.</p></article>
+      <article class="card"><div class="icon">📶</div><h3>Online & offline</h3><p>Use offline features without data and connect when you want online community features.</p></article>
+    </section>
+    <section class="download">
+      <div><h2>Ready to try Bwayo?</h2><p>Visit the official release page to see the latest available Android download.</p></div>
+      <a class="button" href="https://github.com/nabonyajenipher-cell/Bwayo-supa-app/releases/latest">View latest release</a>
     </section>
   </main>
+  <footer><div class="wrap">Owner &amp; Founder: <strong>BWAYO EMMANUEL</strong> · Bwayo Super App</div></footer>
 </body>
 </html>
