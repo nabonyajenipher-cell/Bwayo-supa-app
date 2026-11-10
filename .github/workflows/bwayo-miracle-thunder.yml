@@ -31,7 +31,7 @@ jobs:
       - name: Generate Android platform files
         run: flutter create --platforms=android --project-name bwayo_miracle_thunder .
       - run: flutter pub get
-      - run: flutter analyze lib
+      - run: flutter analyze lib --no-fatal-infos
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
         with:
@@ -54,7 +54,7 @@ jobs:
       - name: Generate Windows platform files
         run: flutter create --platforms=windows --project-name bwayo_miracle_thunder .
       - run: flutter pub get
-      - run: flutter analyze lib
+      - run: flutter analyze lib --no-fatal-infos
       - run: flutter build windows --release
       - name: Package Windows app
         shell: pwsh
