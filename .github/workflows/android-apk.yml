@@ -22,23 +22,24 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.BWAYO_UPLOAD_KEYSTORE_BASE64 }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/bwayo-upload.jks"
-            echo "BWAYO_KEYSTORE_PATH=$RUNNER_TEMP/bwayo-upload.jks" >> "$GITHUB_ENV"
-            echo "Google Play upload key found; release bundle will be signed."
-          else
-            echo "Google Play upload key is not configured; release bundle will be unsigned."
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$BWAYO_KEYSTORE_PASSWORD" ] || [ -z "$BWAYO_KEY_ALIAS" ] || [ -z "$BWAYO_KEY_PASSWORD" ]; then
+            echo "::error::BWAYO signing secrets are required. Add all four BWAYO_UPLOAD_* repository secrets before building a release."
+            exit 1
           fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/bwayo-upload.jks"
+          echo "BWAYO_KEYSTORE_PATH=$RUNNER_TEMP/bwayo-upload.jks" >> "$GITHUB_ENV"
+          echo "BWAYO release signing key configured."
       - name: Build Android APK and release bundle
         env:
           BWAYO_KEYSTORE_PASSWORD: ${{ secrets.BWAYO_UPLOAD_STORE_PASSWORD }}
           BWAYO_KEY_ALIAS: ${{ secrets.BWAYO_UPLOAD_KEY_ALIAS }}
           BWAYO_KEY_PASSWORD: ${{ secrets.BWAYO_UPLOAD_KEY_PASSWORD }}
+          BWAYO_KEYSTORE_PATH: ${{ env.BWAYO_KEYSTORE_PATH }}
         run: |
-          gradle --no-daemon :app:assembleDebug :app:bundleRelease
+          gradle --no-daemon :app:assembleRelease :app:bundleRelease
       - name: Prepare clearly named files
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk Bwayo-Super-App.apk
+          cp app/build/outputs/apk/release/app-release.apk Bwayo-Super-App.apk
           cp app/build/outputs/bundle/release/app-release.aab Bwayo-Super-App.aab
       - uses: actions/upload-artifact@v4
         with:

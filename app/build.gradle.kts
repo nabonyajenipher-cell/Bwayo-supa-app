@@ -25,7 +25,7 @@ android {
     }
     buildTypes {
         getByName("release") {
-            // The release AAB is signed only after the owner adds the upload-key secrets.
+            // Both release APK and AAB use the same persistent owner-controlled upload key.
             if (!System.getenv("BWAYO_KEYSTORE_PATH").isNullOrBlank()) {
                 signingConfig = signingConfigs.getByName("playUpload")
             }
