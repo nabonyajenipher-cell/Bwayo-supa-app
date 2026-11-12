@@ -115,7 +115,7 @@ class MainActivity : Activity() {
    background=rounded(Color.rgb(222,247,235),14);setPadding(dp(12),dp(13),dp(12),dp(13))
   }
   l.addView(status,LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(13);bottomMargin=dp(8)})
-  l.addView(btn("CONNECT TO ONLINE COMMUNITY"){if(!hasInternet()){msg("No internet connection. Connect to Wi-Fi or mobile data, then try again.");return@btn};if(token!=null&&userId!=null)loadHome() else showAuth()})
+  l.addView(btn("CONNECT TO ONLINE COMMUNITY"){if(!hasInternet()){msg("No internet connection. Connect to Wi-Fi or mobile data, then try again.");return@btn};if(token!=null&&userId!=null)restoreSavedSession() else showAuth()})
   l.addView(TextView(this).apply{
    text="YOUR APPS";textSize=12f;letterSpacing=0.12f;typeface=Typeface.DEFAULT_BOLD
    setTextColor(Color.rgb(71,85,105));setPadding(dp(4),dp(18),dp(4),dp(7))
@@ -288,7 +288,7 @@ class MainActivity : Activity() {
   val l=base();l.addView(heading("BWAYO SUPER APP"));l.addView(TextView(this).apply{text="Sign in or create your account";textSize=17f;gravity=Gravity.CENTER;setTextColor(Color.DKGRAY)})
   val n=EditText(this).apply{hint="Your name (for registration)"}
   val e=EditText(this).apply{hint="Email address";inputType=33}
-  val p=EditText(this).apply{hint="Password (at least 6 characters)";inputType=129}
+  val p=EditText(this).apply{hint="Password (at least 8 characters)";inputType=129}
   l.addView(n);l.addView(e);l.addView(p)
   val authStatus=TextView(this).apply{text="";textSize=14f;gravity=Gravity.CENTER;setTextColor(Color.rgb(0,105,95));setPadding(8,8,8,8)}
   l.addView(authStatus)
@@ -302,7 +302,7 @@ class MainActivity : Activity() {
   }
   createButton=btn("Create account"){
    val name=n.text.toString().trim();val email=e.text.toString().trim();val pass=p.text.toString()
-   if(name.isBlank()||email.isBlank()||pass.length<6){msg("Enter name, email and password of at least 6 characters.");return@btn}
+   if(name.isBlank()||email.isBlank()||pass.length<8){msg("Enter name, email and password of at least 6 characters.");return@btn}
    setAuthBusy(true,"Creating your account securely...")
    async{try{
     val payload=JSONObject().put("email",email).put("password",pass).put("data",JSONObject().put("name",name))
