@@ -1,11 +1,10 @@
 name: Build Bwayo Super App (APK and AAB)
-# Rebuild after removing the offline converter; app features otherwise unchanged.
 on:
   push:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: write
+  contents: read
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,48 +17,43 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Prepare Google Play upload signing key
+      - name: Prepare optional Google Play upload signing key
+        id: signing
         env:
           KEYSTORE_BASE64: ${{ secrets.BWAYO_UPLOAD_KEYSTORE_BASE64 }}
           BWAYO_KEYSTORE_PASSWORD: ${{ secrets.BWAYO_UPLOAD_STORE_PASSWORD }}
           BWAYO_KEY_ALIAS: ${{ secrets.BWAYO_UPLOAD_KEY_ALIAS }}
           BWAYO_KEY_PASSWORD: ${{ secrets.BWAYO_UPLOAD_KEY_PASSWORD }}
         run: |
-          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$BWAYO_KEYSTORE_PASSWORD" ] || [ -z "$BWAYO_KEY_ALIAS" ] || [ -z "$BWAYO_KEY_PASSWORD" ]; then
-            echo "::error::BWAYO signing secrets are required. Add all four BWAYO_UPLOAD_* repository secrets before building a release."
-            exit 1
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$BWAYO_KEYSTORE_PASSWORD" ] && [ -n "$BWAYO_KEY_ALIAS" ] && [ -n "$BWAYO_KEY_PASSWORD" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/bwayo-upload.jks"
+            echo "BWAYO_KEYSTORE_PATH=$RUNNER_TEMP/bwayo-upload.jks" >> "$GITHUB_ENV"
+            echo "BWAYO_SIGNING_READY=true" >> "$GITHUB_ENV"
+            echo "Signing key is configured."
+          else
+            echo "BWAYO_SIGNING_READY=false" >> "$GITHUB_ENV"
+            echo "::warning::Upload signing secrets are missing. Building a debug APK only; no Play Store AAB will be produced."
           fi
-          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/bwayo-upload.jks"
-          echo "BWAYO_KEYSTORE_PATH=$RUNNER_TEMP/bwayo-upload.jks" >> "$GITHUB_ENV"
-          echo "BWAYO release signing key configured."
-      - name: Build Android APK and release bundle
+      - name: Build installable debug APK
+        run: gradle --no-daemon :app:assembleDebug
+      - name: Build signed release APK and AAB when signing is configured
+        if: env.BWAYO_SIGNING_READY == 'true'
         env:
           BWAYO_KEYSTORE_PASSWORD: ${{ secrets.BWAYO_UPLOAD_STORE_PASSWORD }}
           BWAYO_KEY_ALIAS: ${{ secrets.BWAYO_UPLOAD_KEY_ALIAS }}
           BWAYO_KEY_PASSWORD: ${{ secrets.BWAYO_UPLOAD_KEY_PASSWORD }}
           BWAYO_KEYSTORE_PATH: ${{ env.BWAYO_KEYSTORE_PATH }}
+        run: gradle --no-daemon :app:assembleRelease :app:bundleRelease
+      - name: Prepare APK and AAB files
         run: |
-          gradle --no-daemon :app:assembleRelease :app:bundleRelease
-      - name: Prepare clearly named files
-        run: |
-          cp app/build/outputs/apk/release/app-release.apk Bwayo-Super-App.apk
-          cp app/build/outputs/bundle/release/app-release.aab Bwayo-Super-App.aab
+          cp app/build/outputs/apk/debug/app-debug.apk Bwayo-Super-App-debug.apk
+          if [ -f app/build/outputs/apk/release/app-release.apk ]; then cp app/build/outputs/apk/release/app-release.apk Bwayo-Super-App-release.apk; fi
+          if [ -f app/build/outputs/bundle/release/app-release.aab ]; then cp app/build/outputs/bundle/release/app-release.aab Bwayo-Super-App.aab; fi
       - uses: actions/upload-artifact@v4
         with:
           name: Bwayo-Super-App-Android-Files
           path: |
-            Bwayo-Super-App.apk
+            Bwayo-Super-App-debug.apk
+            Bwayo-Super-App-release.apk
             Bwayo-Super-App.aab
           if-no-files-found: error
-      - name: Publish APK and AAB to public GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: bwayo-v${{ github.run_number }}
-          name: Bwayo Super App v${{ github.run_number }}
-          body: |
-            Android APK: install directly on Android devices.
-            Android App Bundle (AAB): signed for Google Play only when the owner has configured the four BWAYO_UPLOAD_* repository secrets.
-          files: |
-            Bwayo-Super-App.apk
-            Bwayo-Super-App.aab
-          make_latest: true
