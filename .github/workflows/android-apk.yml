@@ -21,6 +21,9 @@ jobs:
       - name: Prepare Google Play upload signing key
         env:
           KEYSTORE_BASE64: ${{ secrets.BWAYO_UPLOAD_KEYSTORE_BASE64 }}
+          BWAYO_KEYSTORE_PASSWORD: ${{ secrets.BWAYO_UPLOAD_STORE_PASSWORD }}
+          BWAYO_KEY_ALIAS: ${{ secrets.BWAYO_UPLOAD_KEY_ALIAS }}
+          BWAYO_KEY_PASSWORD: ${{ secrets.BWAYO_UPLOAD_KEY_PASSWORD }}
         run: |
           if [ -z "$KEYSTORE_BASE64" ] || [ -z "$BWAYO_KEYSTORE_PASSWORD" ] || [ -z "$BWAYO_KEY_ALIAS" ] || [ -z "$BWAYO_KEY_PASSWORD" ]; then
             echo "::error::BWAYO signing secrets are required. Add all four BWAYO_UPLOAD_* repository secrets before building a release."
