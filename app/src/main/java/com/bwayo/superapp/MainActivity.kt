@@ -51,49 +51,97 @@ class MainActivity : Activity() {
  private fun offlinePosts():JSONArray=try{JSONArray(offlinePrefs().getString("posts","[]"))}catch(_:Exception){JSONArray()}
  private fun showOfflineHome(){
   val l=base()
+  // Branded app header
   val hero=LinearLayout(this).apply{
    orientation=1
-   background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(15,45,112),Color.rgb(37,99,235),Color.rgb(91,76,210))).apply{cornerRadius=dp(24).toFloat()}
-   setPadding(dp(20),dp(20),dp(20),dp(20));elevation=dp(4).toFloat()
+   background=GradientDrawable(GradientDrawable.Orientation.TL_BR,intArrayOf(Color.rgb(8,20,43),Color.rgb(18,43,78),Color.rgb(29,63,91))).apply{cornerRadius=dp(26).toFloat()}
+   setPadding(dp(20),dp(20),dp(20),dp(20));elevation=dp(5).toFloat()
   }
-  hero.addView(TextView(this).apply{text="BWAYO  ✦  SUPER APP";textSize=21f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.WHITE)})
-  hero.addView(TextView(this).apply{text="Your community. Your games. Your space.";textSize=15f;setTextColor(Color.rgb(226,235,255));setPadding(0,dp(8),0,dp(14))})
-  hero.addView(TextView(this).apply{text="WELCOME BACK, $displayName 👋";textSize=13f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.WHITE);background=rounded(Color.argb(45,255,255,255),12);setPadding(dp(11),dp(9),dp(11),dp(9))})
+  val brandRow=LinearLayout(this).apply{orientation=0;gravity=Gravity.CENTER_VERTICAL}
+  val mark=TextView(this).apply{
+   text="B";textSize=27f;typeface=Typeface.create("sans-serif",Typeface.BOLD);gravity=Gravity.CENTER
+   setTextColor(Color.rgb(11,25,48));background=rounded(Color.rgb(244,199,105),16)
+   val p=LinearLayout.LayoutParams(dp(48),dp(48));p.rightMargin=dp(12);layoutParams=p
+  }
+  brandRow.addView(mark)
+  val brandText=LinearLayout(this).apply{orientation=1}
+  brandText.addView(TextView(this).apply{text="BWAYO";textSize=21f;letterSpacing=0.12f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.WHITE)})
+  brandText.addView(TextView(this).apply{text="SUPER APP";textSize=11f;letterSpacing=0.22f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(244,199,105))})
+  brandRow.addView(brandText)
+  hero.addView(brandRow)
+  hero.addView(TextView(this).apply{
+   text="Everything you need, in one place.";textSize=16f;typeface=Typeface.create("sans-serif-medium",Typeface.NORMAL)
+   setTextColor(Color.rgb(226,235,247));setPadding(0,dp(18),0,dp(14))
+  })
+  hero.addView(TextView(this).apply{
+   text="WELCOME, $displayName";textSize=12f;letterSpacing=0.04f;typeface=Typeface.DEFAULT_BOLD
+   setTextColor(Color.rgb(255,239,199));background=rounded(Color.argb(38,255,255,255),12)
+   setPadding(dp(12),dp(10),dp(12),dp(10))
+  })
   l.addView(hero)
-  l.addView(TextView(this).apply{text="OFFLINE MODE  •  Your saved content is on this phone";textSize=12f;typeface=Typeface.DEFAULT_BOLD;gravity=Gravity.CENTER;setTextColor(Color.rgb(0,105,75));background=rounded(Color.rgb(220,252,231),12);setPadding(dp(10),dp(12),dp(10),dp(12))}.also{val p=LinearLayout.LayoutParams(-1,-2);p.setMargins(0,dp(12),0,dp(8));it.layoutParams=p})
-  l.addView(btn("🌐  SWITCH TO ONLINE MODE"){if(!hasInternet()){msg("No internet connection. Connect to Wi-Fi or mobile data, then try again.");return@btn};if(token!=null&&userId!=null)loadHome() else showAuth()})
-  l.addView(TextView(this).apply{text="QUICK ACCESS";textSize=12f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(100,116,139));setPadding(dp(4),dp(16),dp(4),dp(7))})
-  fun shortcut(icon:String,title:String,detail:String,action:()->Unit):LinearLayout{
+  val status=TextView(this).apply{
+   text="●  OFFLINE MODE     •     SAVED ON THIS PHONE";textSize=10f;letterSpacing=0.04f
+   typeface=Typeface.DEFAULT_BOLD;gravity=Gravity.CENTER;setTextColor(Color.rgb(24,101,75))
+   background=rounded(Color.rgb(222,247,235),14);setPadding(dp(12),dp(13),dp(12),dp(13))
+  }
+  l.addView(status,LinearLayout.LayoutParams(-1,-2).apply{topMargin=dp(13);bottomMargin=dp(8)})
+  l.addView(btn("CONNECT TO ONLINE COMMUNITY"){if(!hasInternet()){msg("No internet connection. Connect to Wi-Fi or mobile data, then try again.");return@btn};if(token!=null&&userId!=null)loadHome() else showAuth()})
+  l.addView(TextView(this).apply{
+   text="YOUR APPS";textSize=12f;letterSpacing=0.12f;typeface=Typeface.DEFAULT_BOLD
+   setTextColor(Color.rgb(71,85,105));setPadding(dp(4),dp(18),dp(4),dp(7))
+  })
+  fun module(icon:String,title:String,detail:String,action:()->Unit):LinearLayout{
    return LinearLayout(this).apply{
-    orientation=1;gravity=Gravity.CENTER;background=rounded(Color.WHITE,18)
-    setPadding(dp(8),dp(14),dp(8),dp(14));elevation=dp(2).toFloat()
-    addView(TextView(this@MainActivity).apply{text=icon;textSize=27f;gravity=Gravity.CENTER})
-    addView(TextView(this@MainActivity).apply{text=title;textSize=13f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(30,58,138));gravity=Gravity.CENTER;setPadding(0,dp(6),0,dp(2))})
-    addView(TextView(this@MainActivity).apply{text=detail;textSize=10f;setTextColor(Color.rgb(100,116,139));gravity=Gravity.CENTER})
+    orientation=1;gravity=Gravity.CENTER;background=rounded(Color.WHITE,20)
+    setPadding(dp(10),dp(14),dp(10),dp(14));elevation=dp(3).toFloat()
+    addView(TextView(this@MainActivity).apply{
+     text=icon;textSize=29f;gravity=Gravity.CENTER
+     background=rounded(Color.rgb(239,244,250),18);setPadding(dp(12),dp(8),dp(12),dp(8))
+    })
+    addView(TextView(this@MainActivity).apply{
+     text=title;textSize=14f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(20,39,69))
+     gravity=Gravity.CENTER;setPadding(0,dp(9),0,dp(3))
+    })
+    addView(TextView(this@MainActivity).apply{
+     text=detail;textSize=10f;setTextColor(Color.rgb(100,116,139));gravity=Gravity.CENTER
+    })
+    isClickable=true;isFocusable=true
     setOnClickListener{performHapticFeedback(android.view.HapticFeedbackConstants.CONTEXT_CLICK);action()}
    }
   }
-  val shortcuts=listOf(
-   listOf("🎮","City simulator","Play and earn") to {showSimulator()},
-   listOf("♟️","Offline chess","Play a match") to {showChess()},
-   listOf("📝","Create a post","Save it locally") to {createOfflinePost()},
-   listOf("🌍","My community","Your saved posts") to {showOfflineFeed()},
-   listOf("👤","My profile","Edit your name") to {showOfflineProfile()},
-   listOf("⚙️","Settings","Manage local data") to {showOfflineSettings()}
+  val modules=listOf<Triple<String,String,()->Unit>>(
+   Triple("🎮","City Life Simulator",{showSimulator()}),
+   Triple("♟️","Offline Chess",{showChess()}),
+   Triple("✍️","Create a Post",{createOfflinePost()}),
+   Triple("🌍","My Community",{showOfflineFeed()}),
+   Triple("👤","My Profile",{showOfflineProfile()}),
+   Triple("⚙️","Settings",{showOfflineSettings()})
   )
   var index=0
-  while(index<shortcuts.size){
+  while(index<modules.size){
    val row=LinearLayout(this).apply{orientation=0}
    for(col in 0..1){
-    if(index<shortcuts.size){
-     val item=shortcuts[index]
-     row.addView(shortcut(item.first[0],item.first[1],item.first[2],item.second),LinearLayout.LayoutParams(0,dp(116),1f).apply{setMargins(dp(4),dp(4),dp(4),dp(4))})
+    if(index<modules.size){
+     val item=modules[index]
+     row.addView(module(item.first,item.second,when(item.second){
+      "City Life Simulator"->"Explore and build your life"
+      "Offline Chess"->"Play a match on your phone"
+      "Create a Post"->"Write and save locally"
+      "My Community"->"View your saved posts"
+      "My Profile"->"Manage your local profile"
+      else->"Personalise your app"
+     },item.third),LinearLayout.LayoutParams(0,dp(132),1f).apply{setMargins(dp(5),dp(5),dp(5),dp(5))})
      index++
-    }else row.addView(Space(this),LinearLayout.LayoutParams(0,dp(116),1f))
+    }else row.addView(Space(this),LinearLayout.LayoutParams(0,dp(132),1f))
    }
    l.addView(row)
   }
-  l.addView(TextView(this).apply{text="BWAYO EMMANUEL  •  OWNER & FOUNDER";textSize=11f;typeface=Typeface.DEFAULT_BOLD;gravity=Gravity.CENTER;setTextColor(Color.rgb(100,116,139));setPadding(dp(4),dp(22),dp(4),dp(8))})
+  val footer=TextView(this).apply{
+   text="BWAYO EMMANUEL  •  OWNER & FOUNDER";textSize=10f;letterSpacing=0.08f
+   typeface=Typeface.DEFAULT_BOLD;gravity=Gravity.CENTER;setTextColor(Color.rgb(100,116,139))
+   setPadding(dp(4),dp(24),dp(4),dp(12))
+  }
+  l.addView(footer)
   setScrollableContent(l)
  }
  private fun createOfflinePost(){
