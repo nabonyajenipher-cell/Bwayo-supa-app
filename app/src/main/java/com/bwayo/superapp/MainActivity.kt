@@ -134,9 +134,36 @@ class MainActivity : Activity() {
  private fun showOfflineSettings(){
   val l=base();l.addView(heading("OFFLINE SETTINGS"))
   l.addView(TextView(this).apply{text="No sign-in, cloud account, or internet connection is needed. Your local profile, posts and simulator progress are stored on this device.";textSize=15f;setTextColor(Color.DKGRAY);setPadding(8,18,8,18)})
+  l.addView(btn("📱 PHONE SETTINGS"){showPhoneSettings()})
   l.addView(btn("DELETE LOCAL POSTS"){AlertDialog.Builder(this).setTitle("Delete saved posts?").setMessage("This only deletes posts saved inside Bwayo on this phone.").setNegativeButton("Cancel",null).setPositiveButton("Delete"){_,_->offlinePrefs().edit().remove("posts").apply();msg("Local posts deleted.");showOfflineSettings()}.show()})
   l.addView(btn("← HOME"){showOfflineHome()});setScrollableContent(l)
  }
+ private fun showPhoneSettings(){
+  val l=base();l.addView(heading("PHONE SETTINGS"))
+  l.addView(TextView(this).apply{text="Open Android system settings from Bwayo. Android controls these settings; Bwayo will not change them without your permission.";textSize=14f;setTextColor(Color.DKGRAY);setPadding(dp(8),dp(12),dp(8),dp(12))})
+  fun setting(label:String,detail:String,action:String){
+   val card=LinearLayout(this).apply{orientation=1;background=rounded(Color.WHITE,14);setPadding(dp(14),dp(10),dp(14),dp(10))}
+   card.addView(TextView(this).apply{text=label;textSize=16f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(30,58,138))})
+   card.addView(TextView(this).apply{text=detail;textSize=12f;setTextColor(Color.GRAY);setPadding(0,dp(3),0,0)})
+   card.setOnClickListener{try{startActivity(Intent(action))}catch(_:Exception){msg("This settings page is not available on this phone.")}}
+   val p=LinearLayout.LayoutParams(-1,-2);p.setMargins(0,dp(5),0,dp(5));l.addView(card,p)
+  }
+  setting("📶 Wi-Fi & network","Connect to Wi-Fi and manage mobile network","android.settings.WIRELESS_SETTINGS")
+  setting("📡 Wi-Fi","Choose a Wi-Fi network","android.settings.WIFI_SETTINGS")
+  setting("🔵 Bluetooth","Pair and manage Bluetooth devices","android.settings.BLUETOOTH_SETTINGS")
+  setting("🔊 Sound & vibration","Manage ringtone, volume and vibration","android.settings.SOUND_SETTINGS")
+  setting("☀️ Display","Brightness and screen timeout","android.settings.DISPLAY_SETTINGS")
+  setting("📍 Location","Manage device location services","android.settings.LOCATION_SOURCE_SETTINGS")
+  setting("🔋 Battery","Battery usage and power saving","android.settings.BATTERY_SAVER_SETTINGS")
+  setting("💾 Storage","Check phone storage","android.settings.INTERNAL_STORAGE_SETTINGS")
+  setting("🕒 Date & time","Manage date, time and time zone","android.settings.DATE_SETTINGS")
+  setting("🌐 Language & input","Manage language and keyboard options","android.settings.INPUT_METHOD_SETTINGS")
+  setting("📦 Installed apps","View and manage installed apps","android.settings.APPLICATION_SETTINGS")
+  setting("⚙️ All Android settings","Open the full phone settings app","android.settings.SETTINGS")
+  setting("🛡️ Bwayo app permissions","Review permissions granted to Bwayo","android.settings.APPLICATION_DETAILS_SETTINGS")
+  l.addView(btn("← BACK"){showOfflineSettings()});setScrollableContent(l)
+ }
+
  private fun dp(v:Int)= (v*resources.displayMetrics.density).toInt()
  private fun rounded(color:Int,radius:Int=18)=GradientDrawable().apply{setColor(color);cornerRadius=dp(radius).toFloat()}
  private fun base()=LinearLayout(this).apply{
@@ -610,12 +637,19 @@ class MainActivity : Activity() {
   "5. Connect" to "Like, comment on and share posts. Open Notifications to check activity.",
   "6. Invite friends" to "Tap Invite Friends and share the download link."
  ))
- private fun showSettings()=showInfoPage("APP SETTINGS","Manage your session and review your account details.",listOf(
-  "Signed-in account" to ("Name: "+displayName+"\\nEmail: "+(userEmail?: "Not available")),
-  "Account type" to (if(isAdmin)"Administrator account" else "Community member account"),
-  "Session security" to "Sign out when you finish using Bwayo on a shared phone. You can sign in again with your email and password.",
-  "Sign out" to "Use the Sign out button on the home page to end your current session."
- ))
+ private fun showSettings(){
+  val l=base();l.addView(heading("APP & PHONE SETTINGS"))
+  l.addView(TextView(this).apply{text="Bwayo app settings";textSize=18f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(30,58,138));setPadding(dp(6),dp(16),dp(6),dp(5))})
+  l.addView(TextView(this).apply{text="Name: "+displayName+"\nEmail: "+(userEmail?: "Not available")+"\nAccount type: "+(if(isAdmin)"Administrator" else "Community member");textSize=15f;setTextColor(Color.DKGRAY);background=rounded(Color.WHITE,14);setPadding(dp(14),dp(14),dp(14),dp(14))})
+  l.addView(TextView(this).apply{text="Phone settings";textSize=18f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(30,58,138));setPadding(dp(6),dp(18),dp(6),dp(5))})
+  l.addView(btn("📱 OPEN PHONE SETTINGS"){showPhoneSettings()})
+  l.addView(btn("🔐 BWAYO APP PERMISSIONS"){try{startActivity(Intent("android.settings.APPLICATION_DETAILS_SETTINGS",Uri.parse("package:"+packageName)))}catch(_:Exception){msg("Could not open app permissions.")}})
+  l.addView(TextView(this).apply{text="Session security: Sign out when you finish using Bwayo on a shared phone. You can sign in again with your email and password.";textSize=13f;setTextColor(Color.GRAY);setPadding(dp(8),dp(14),dp(8),dp(8))})
+  l.addView(btn("SIGN OUT"){signOut()})
+  l.addView(btn("← BACK TO HOME"){loadHome()})
+  setScrollableContent(l)
+ }
+
  private fun sendFeedback(){
   try{startActivity(Intent(Intent.ACTION_SENDTO,Uri.parse("mailto:support@bwayo.app")).putExtra(Intent.EXTRA_SUBJECT,"Bwayo app feedback").putExtra(Intent.EXTRA_TEXT,"My feedback about Bwayo Super App:\\n"))}
   catch(_:Exception){msg("No email app found on this phone.")}
