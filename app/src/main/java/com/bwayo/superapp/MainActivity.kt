@@ -145,7 +145,7 @@ class MainActivity : Activity() {
    val card=LinearLayout(this).apply{orientation=1;background=rounded(Color.WHITE,14);setPadding(dp(14),dp(10),dp(14),dp(10))}
    card.addView(TextView(this).apply{text=label;textSize=16f;typeface=Typeface.DEFAULT_BOLD;setTextColor(Color.rgb(30,58,138))})
    card.addView(TextView(this).apply{text=detail;textSize=12f;setTextColor(Color.GRAY);setPadding(0,dp(3),0,0)})
-   card.setOnClickListener{try{startActivity(Intent(action))}catch(_:Exception){msg("This settings page is not available on this phone.")}}
+   card.setOnClickListener{try{val intent=if(action=="android.settings.APPLICATION_DETAILS_SETTINGS")Intent(action,Uri.parse("package:"+packageName)) else Intent(action);startActivity(intent)}catch(_:Exception){msg("This settings page is not available on this phone.")}}
    val p=LinearLayout.LayoutParams(-1,-2);p.setMargins(0,dp(5),0,dp(5));l.addView(card,p)
   }
   setting("📶 Wi-Fi & network","Connect to Wi-Fi and manage mobile network","android.settings.WIRELESS_SETTINGS")
