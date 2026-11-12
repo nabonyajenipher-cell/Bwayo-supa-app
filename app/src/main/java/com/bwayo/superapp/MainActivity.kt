@@ -308,7 +308,14 @@ class MainActivity : Activity() {
     val payload=JSONObject().put("email",email).put("password",pass).put("data",JSONObject().put("name",name))
     val o=JSONObject(req("/auth/v1/signup","POST",payload,null))
     if(o.optString("access_token").isNotBlank()&&o.has("user")){save(o,name);runOnUiThread{loadHome()}}
-    else runOnUiThread{setAuthBusy(false,"Account created. Check your email, then sign in.");msg("Account created. Check your email to confirm, then sign in.")}
+    else{
+     try{
+      val session=JSONObject(req("/auth/v1/token?grant_type=password","POST",JSONObject().put("email",email).put("password",pass),null))
+      save(session,name);runOnUiThread{loadHome()}
+     }catch(signInError:Exception){
+      runOnUiThread{setAuthBusy(false,"Account created. Sign in below to continue.");msg("Your account was created, but automatic sign-in did not complete. Please tap Sign in.")}
+     }
+    }
    }catch(x:Exception){runOnUiThread{setAuthBusy(false,"Please try again.");msg(x.message?:"Registration failed")}}
    }
   }
