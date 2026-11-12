@@ -783,6 +783,35 @@ class MainActivity : Activity() {
   })
   val stats=TextView(this).apply{text="Loading totals...";textSize=17f;setTextColor(blue);setPadding(8,12,8,12)}
   l.addView(stats)
+  l.addView(btn("＋ REGISTER NEW MEMBER"){
+   val form=LinearLayout(this).apply{orientation=1;setPadding(dp(8),dp(4),dp(8),dp(4))}
+   val memberName=EditText(this).apply{hint="Member full name"}
+   val memberEmail=EditText(this).apply{hint="Member email address";inputType=33}
+   val memberPassword=EditText(this).apply{hint="Temporary password (minimum 8 characters)";inputType=129}
+   form.addView(memberName);form.addView(memberEmail);form.addView(memberPassword)
+   val dialog=AlertDialog.Builder(this).setTitle("Register new member")
+    .setMessage("Create a standard community member account. This account will not receive administrator permissions.")
+    .setView(form).setNegativeButton("Cancel",null).setPositiveButton("Register",null).create()
+   dialog.setOnShowListener{
+    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener{
+     val name=memberName.text.toString().trim()
+     val email=memberEmail.text.toString().trim()
+     val password=memberPassword.text.toString()
+     if(name.isBlank()||!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()||password.length<8){
+      msg("Enter the member name, a valid email and a password of at least 8 characters.");return@setOnClickListener
+     }
+     dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled=false
+     async{try{
+      val signup=JSONObject(req("/auth/v1/signup","POST",JSONObject().put("email",email).put("password",password).put("data",JSONObject().put("name",name)),null))
+      val newUser=signup.optJSONObject("user")?:throw Exception("Registration did not return a user account.")
+      if(newUser.optString("id").isBlank())throw Exception("Could not identify the new member account.")
+      runOnUiThread{dialog.dismiss();msg("Member account created for "+email);showAdmin()}
+     }catch(x:Exception){runOnUiThread{dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled=true;msg("Member registration failed: "+(x.message?:"Please try again."))}}
+     }
+    }
+   }
+   dialog.show()
+  })
   l.addView(btn("＋ REGISTER NEW ADMIN"){
    val form=LinearLayout(this).apply{orientation=1;setPadding(dp(8),dp(4),dp(8),dp(4))}
    val adminName=EditText(this).apply{hint="Administrator full name"}
