@@ -783,6 +783,37 @@ class MainActivity : Activity() {
   })
   val stats=TextView(this).apply{text="Loading totals...";textSize=17f;setTextColor(blue);setPadding(8,12,8,12)}
   l.addView(stats)
+  l.addView(btn("＋ REGISTER NEW ADMIN"){
+   val form=LinearLayout(this).apply{orientation=1;setPadding(dp(8),dp(4),dp(8),dp(4))}
+   val adminName=EditText(this).apply{hint="Administrator full name"}
+   val adminEmail=EditText(this).apply{hint="Administrator email";inputType=33}
+   val adminPassword=EditText(this).apply{hint="Temporary password (minimum 8 characters)";inputType=129}
+   form.addView(adminName);form.addView(adminEmail);form.addView(adminPassword)
+   val dialog=AlertDialog.Builder(this).setTitle("Register new administrator")
+    .setMessage("Create a new account and grant administrator access. Only existing administrators can use this form.")
+    .setView(form).setNegativeButton("Cancel",null).setPositiveButton("Register",null).create()
+   dialog.setOnShowListener{
+    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener{
+     val name=adminName.text.toString().trim()
+     val email=adminEmail.text.toString().trim()
+     val password=adminPassword.text.toString()
+     if(name.isBlank()||email.isBlank()||password.length<8){
+      msg("Enter the name, a valid email and a password of at least 8 characters.");return@setOnClickListener
+     }
+     dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled=false
+     async{try{
+      val signup=JSONObject(req("/auth/v1/signup","POST",JSONObject().put("email",email).put("password",password).put("data",JSONObject().put("name",name)),null))
+      val newUser=signup.optJSONObject("user")?:throw Exception("Registration did not return a user account.")
+      val newId=newUser.optString("id")
+      if(newId.isBlank())throw Exception("Could not identify the new account.")
+      req("/rest/v1/rpc/bwayo_set_user_role","POST",JSONObject().put("target_user",newId).put("new_role","admin"),token)
+      runOnUiThread{dialog.dismiss();msg("Administrator account registered successfully.");showAdmin()}
+     }catch(x:Exception){runOnUiThread{dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled=true;msg("Admin registration failed: "+(x.message?:"Please try again."))}}
+     }
+    }
+   }
+   dialog.show()
+  })
   val list=LinearLayout(this).apply{orientation=1}
   l.addView(ScrollView(this).apply{addView(list)},LinearLayout.LayoutParams(-1,dp(480)))
   l.addView(btn("Refresh dashboard"){showAdmin()})
