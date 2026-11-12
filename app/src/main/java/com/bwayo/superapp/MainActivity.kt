@@ -39,7 +39,37 @@ class MainActivity : Activity() {
  private var displayName="Member"; private var isAdmin=false; private lateinit var feed:LinearLayout; private var pickedVideo:Uri?=null; private var videoStatus:TextView?=null; private var pickedAvatar:Uri?=null; private var avatarUrl:String?=null
  override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState)
   displayName=getSharedPreferences("bwayo_offline",MODE_PRIVATE).getString("name","BWAYO PLAYER")?:"BWAYO PLAYER"
-  showOfflineHome()
+  restoreSavedSession()
+ }
+ private fun restoreSavedSession(){
+  val prefs=getSharedPreferences("bwayo_session",MODE_PRIVATE)
+  val savedToken=prefs.getString("token",null)
+  val savedRefresh=prefs.getString("refresh_token",null)
+  val savedId=prefs.getString("user_id",null)
+  if(savedToken.isNullOrBlank()||savedId.isNullOrBlank()){showOfflineHome();return}
+  token=savedToken;userId=savedId;userEmail=prefs.getString("email",null)
+  displayName=prefs.getString("name",displayName)?:displayName
+  if(!hasInternet()){showOfflineHome();return}
+  async{
+   try{
+    if(!savedRefresh.isNullOrBlank()){
+     val refreshed=JSONObject(req("/auth/v1/token?grant_type=refresh_token","POST",JSONObject().put("refresh_token",savedRefresh),null))
+     save(refreshed,displayName)
+    }else{
+     val current=JSONObject(req("/auth/v1/user","GET",null,savedToken))
+     userId=current.getString("id")
+     userEmail=current.optString("email",userEmail?:"")
+    }
+    runOnUiThread{loadHome()}
+   }catch(x:Exception){
+    val message=x.message?:""
+    if(message.contains("Server error 400")||message.contains("Server error 401")){
+     token=null;userId=null;userEmail=null
+     prefs.edit().clear().apply()
+    }
+    runOnUiThread{showOfflineHome();msg("Could not restore your online session. Connect again and sign in if needed.")}
+   }
+  }
  }
  private fun offlinePrefs()=getSharedPreferences("bwayo_offline",MODE_PRIVATE)
  private fun hasInternet():Boolean{
@@ -299,7 +329,7 @@ class MainActivity : Activity() {
  private fun save(o:JSONObject,name:String){
   val u=o.getJSONObject("user");token=o.getString("access_token");userId=u.getString("id");userEmail=u.optString("email")
   displayName=name.ifBlank{u.optJSONObject("user_metadata")?.optString("name")?.takeIf{it.isNotBlank()}?:userEmail?:"Member"}
-  getSharedPreferences("bwayo_session",MODE_PRIVATE).edit().putString("token",token).putString("user_id",userId).putString("email",userEmail).putString("name",displayName).apply()
+  getSharedPreferences("bwayo_session",MODE_PRIVATE).edit().putString("token",token).putString("refresh_token",o.optString("refresh_token")).putString("user_id",userId).putString("email",userEmail).putString("name",displayName).apply()
  }
  private fun loadHome(){
   val t=token?:run{showAuth();return};val id=userId?:run{showAuth();return}
